@@ -29,6 +29,10 @@
   button:disabled{opacity:.5;cursor:default}
   textarea,input[type=email],input[type=text]{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
   textarea{min-height:180px;margin-top:10px}
+  input[type=date],input[type=file]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+  .epform label{display:block;margin:12px 0 4px}
+  .epform textarea{min-height:100px;margin-top:0}
+  .sources a,.body a{color:var(--accent)}
   .signin{max-width:420px}
   .signin button{margin-top:10px}
   .tabs{display:flex;gap:8px;margin-bottom:16px}
@@ -42,9 +46,10 @@
 <body>
 <div class="wrap">
   <header>
-    <div><h1>Approval queue</h1><div class="muted" id="who"></div></div>
+    <div><h1 id="pagetitle">Approval queue</h1><div class="muted" id="who"></div></div>
     <button id="signout" hidden>Sign out</button>
   </header>
+  <nav class="tabs" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="episodes">Episodes</button></nav>
   <div id="msg"></div>
   <main id="app"></main>
 </div>
@@ -58,17 +63,19 @@ const app = document.getElementById("app");
 const msgEl = document.getElementById("msg");
 let view = "pending";
 
-const KIND = {movers:"Movers",news:"News",brief_section:"Brief",index_update:"Index",hub_email:"Hub email",linkedin_post:"LinkedIn",outreach:"Outreach",other:"Other"};
+let mode = "queue";
+const KIND = {brief:"The Brief",newsletter:"Newsletter",movers:"Movers",news:"News",brief_section:"Brief",index_update:"Index",hub_email:"Hub email",linkedin_post:"LinkedIn",outreach:"Outreach",other:"Other"};
 const HUB = {hr:"HR",operating_partners:"Operating Partners",cfo:"CFO",ceo:"CEO",investors:"Investors",all:"All hubs"};
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function md(s){return esc(s).split(/\n{2,}/).map(p=>"<p>"+p.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>")+"</p>").join("")}
+function md(s){return esc(s).split(/\n{2,}/).map(p=>"<p>"+p.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,"<br>")+"</p>").join("")}
 function safeUrl(u){try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:null}catch{return null}}
 function say(t){msgEl.innerHTML=t?'<div class="msg">'+esc(t)+'</div>':""}
 function fmt(d){return new Date(d).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
 
 function signInForm(){
   document.getElementById("signout").hidden=true;
+  document.getElementById("nav").hidden=true;
   document.getElementById("who").textContent="";
   app.innerHTML=`<div class="card signin">
     <p>Enter your work email. We'll send you a sign-in link.</p>
@@ -89,6 +96,10 @@ async function load(){
   document.getElementById("who").textContent=session.user.email;
   const {data:admin}=await sb.from("admins").select("email").limit(1);
   if(!admin||!admin.length){app.innerHTML='<div class="empty">This account does not have access to the queue.</div>';return}
+  document.getElementById("nav").hidden=false;
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
+  document.getElementById("pagetitle").textContent=mode==="episodes"?"Episodes":"Approval queue";
+  if(mode==="episodes") return loadEpisodes();
 
   let q=sb.from("drafts").select("*");
   if(view==="pending") q=q.eq("status","pending").order("created_at",{ascending:true});
@@ -146,6 +157,68 @@ async function decide(el,id,patch,stay){
   load();
 }
 
+// ---------- Episodes ----------
+function fmtDate(d){return new Date(d+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}
+function nextTuesday(){const d=new Date();d.setDate(d.getDate()+((9-d.getDay())%7||7));return d.toISOString().slice(0,10)}
+
+async function loadEpisodes(){
+  const {data,error}=await sb.from("episodes").select("id,publish_date,title,guest_name,guest_role,guest_company,episode_url,transcript_filename,notes,added_by,updated_at,transcript_chars").order("publish_date",{ascending:false}).limit(100);
+  if(error){say("Could not load episodes: "+error.message);return}
+  const today=new Date().toISOString().slice(0,10);
+  const rows=(data||[]).map(e=>{
+    const ok=(e.transcript_chars||0)>200;
+    return `<div class="card" data-ep="${e.id}">
+      <div class="meta"><span class="chip kind">${esc(fmtDate(e.publish_date))}</span><span class="chip">${e.publish_date>=today?"Upcoming":"Published"}</span><span class="chip" style="${ok?"color:var(--ok);border-color:var(--ok)":"color:var(--kill);border-color:var(--kill)"}">${ok?"Transcript added":"Transcript missing"}</span></div>
+      <h2>${esc(e.title)}</h2>
+      <div class="muted">${esc(e.guest_name)}${e.guest_role?", "+esc(e.guest_role):""}${e.guest_company?", "+esc(e.guest_company):""}</div>
+      ${e.transcript_filename?`<div class="muted">File: ${esc(e.transcript_filename)}</div>`:""}
+      <div class="actions"><button data-edit="${e.id}">Edit or replace transcript</button></div>
+      <div class="editor"></div></div>`}).join("");
+  app.innerHTML=`<div class="card"><h2>Add an episode</h2>${epForm({publish_date:nextTuesday()})}</div>`+(rows||'<div class="empty">No episodes yet.</div>');
+  bindEpForm(app.querySelector(".card"),null);
+  app.querySelectorAll("button[data-edit]").forEach(b=>b.onclick=async()=>{
+    const card=b.closest(".card"),ed=card.querySelector(".editor");
+    if(ed.innerHTML){ed.innerHTML="";return}
+    const {data:e}=await sb.from("episodes").select("*").eq("id",+b.dataset.edit).single();
+    ed.innerHTML=epForm(e); bindEpForm(ed,e.id);
+  });
+}
+
+function epForm(e){
+  return `<div class="epform">
+    <label class="muted">Publish date (Tuesday)</label><input type="date" name="publish_date" value="${esc(e.publish_date||"")}">
+    <label class="muted">Episode title</label><input type="text" name="title" value="${esc(e.title||"")}">
+    <label class="muted">Guest name</label><input type="text" name="guest_name" value="${esc(e.guest_name||"")}">
+    <label class="muted">Guest role</label><input type="text" name="guest_role" value="${esc(e.guest_role||"")}">
+    <label class="muted">Guest company</label><input type="text" name="guest_company" value="${esc(e.guest_company||"")}">
+    <label class="muted">Episode link (once live, optional)</label><input type="text" name="episode_url" value="${esc(e.episode_url||"")}">
+    <label class="muted">Transcript from Riverside: choose the .txt or .srt file${e.transcript_filename?" (current: "+esc(e.transcript_filename)+")":""}</label><input type="file" name="file" accept=".txt,.srt,.vtt,text/plain">
+    <label class="muted">Or paste the transcript</label><textarea name="transcript" placeholder="Paste here if you are not uploading a file"></textarea>
+    <label class="muted">Notes for the newsletter (optional)</label><input type="text" name="notes" value="${esc(e.notes||"")}">
+    <div class="actions"><button class="approve" data-save="1">Save episode</button></div></div>`;
+}
+
+function bindEpForm(root,id){
+  root.querySelector("button[data-save]").onclick=async(ev)=>{
+    const btn=ev.target, f=n=>root.querySelector(`[name=${n}]`);
+    const rec={publish_date:f("publish_date").value,title:f("title").value.trim(),guest_name:f("guest_name").value.trim(),guest_role:f("guest_role").value.trim()||null,guest_company:f("guest_company").value.trim()||null,episode_url:f("episode_url").value.trim()||null,notes:f("notes").value.trim()||null};
+    if(!rec.publish_date||!rec.title||!rec.guest_name){say("Publish date, title and guest name are needed.");return}
+    if(new Date(rec.publish_date+"T12:00:00").getDay()!==2&&!confirm("That date is not a Tuesday. Save anyway?"))return;
+    const file=f("file").files[0], pasted=f("transcript").value.trim();
+    if(file){
+      if(/\.docx?$|\.pdf$/i.test(file.name)){say("Please export the transcript from Riverside as .txt or .srt.");return}
+      rec.transcript=await file.text(); rec.transcript_filename=file.name;
+    } else if(pasted){rec.transcript=pasted; rec.transcript_filename="pasted"}
+    btn.disabled=true;
+    const q=id?sb.from("episodes").update(rec).eq("id",id):sb.from("episodes").insert(rec);
+    const {error}=await q.select("id");
+    btn.disabled=false;
+    if(error){say("Could not save: "+(/duplicate/i.test(error.message)?"there is already an episode on that date.":error.message));return}
+    say("Episode saved."); loadEpisodes();
+  };
+}
+
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{mode=b.dataset.m;say("");load()});
 document.getElementById("signout").onclick=async()=>{await sb.auth.signOut();say("");signInForm()};
 sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_IN"){history.replaceState(null,"",location.pathname);load()}});
 load();
