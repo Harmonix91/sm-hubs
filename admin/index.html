@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Approval Queue</title>
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e3e2dd;--ok:#1f7a4a;--kill:#a3332b;--accent:#d9682b}
+  @media (prefers-color-scheme: dark){:root{--bg:#141413;--card:#1f1f1d;--ink:#ecebe6;--muted:#a19f97;--line:#33322f;--ok:#4cba7f;--kill:#e0675d;--accent:#ee8a50}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 64px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+  h1{font-size:22px;margin:0}
+  .muted{color:var(--muted);font-size:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .chip.kind{border-color:var(--accent);color:var(--accent)}
+  h2{font-size:17px;margin:0 0 8px}
+  .body p{margin:0 0 8px}
+  .sources{font-size:13px;margin-top:6px;word-break:break-all}
+  .sources a{color:var(--muted)}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{font:inherit;font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+  button.approve{background:var(--ok);border-color:var(--ok);color:#fff}
+  button.kill{color:var(--kill);border-color:var(--kill)}
+  button:disabled{opacity:.5;cursor:default}
+  textarea,input[type=email],input[type=text]{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+  textarea{min-height:180px;margin-top:10px}
+  .signin{max-width:420px}
+  .signin button{margin-top:10px}
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tabs button.on{border-color:var(--ink)}
+  .status{font-size:13px;font-weight:600}
+  .status.approved,.status.published{color:var(--ok)} .status.killed{color:var(--kill)}
+  .empty{text-align:center;padding:40px 16px;color:var(--muted)}
+  .msg{padding:10px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);margin-bottom:14px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>Approval queue</h1><div class="muted" id="who"></div></div>
+    <button id="signout" hidden>Sign out</button>
+  </header>
+  <div id="msg"></div>
+  <main id="app"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://hmjebqoeqffqljfyasys.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtamVicW9lcWZmcWxqZnlhc3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjc2MzEsImV4cCI6MjEwNzg0MzYzMX0.OZMx5dlkf4yp0akhU92t_K5BDN2N9hDhZeh-PzF7B2g"; // public key; data is protected by row-level security
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById("app");
+const msgEl = document.getElementById("msg");
+let view = "pending";
+
+const KIND = {movers:"Movers",news:"News",brief_section:"Brief",index_update:"Index",hub_email:"Hub email",linkedin_post:"LinkedIn",outreach:"Outreach",other:"Other"};
+const HUB = {hr:"HR",operating_partners:"Operating Partners",cfo:"CFO",ceo:"CEO",investors:"Investors",all:"All hubs"};
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function md(s){return esc(s).split(/\n{2,}/).map(p=>"<p>"+p.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>")+"</p>").join("")}
+function safeUrl(u){try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:null}catch{return null}}
+function say(t){msgEl.innerHTML=t?'<div class="msg">'+esc(t)+'</div>':""}
+function fmt(d){return new Date(d).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
+
+function signInForm(){
+  document.getElementById("signout").hidden=true;
+  document.getElementById("who").textContent="";
+  app.innerHTML=`<div class="card signin">
+    <p>Enter your work email. We'll send you a sign-in link.</p>
+    <input type="email" id="email" placeholder="you@sonderandmetric.com" autocomplete="email">
+    <button class="approve" id="send">Send link</button></div>`;
+  document.getElementById("send").onclick=async()=>{
+    const email=document.getElementById("email").value.trim().toLowerCase();
+    if(!email) return;
+    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    say(error?("Could not send the link: "+error.message):"Check your inbox for the sign-in link.");
+  };
+}
+
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session) return signInForm();
+  document.getElementById("signout").hidden=false;
+  document.getElementById("who").textContent=session.user.email;
+  const {data:admin}=await sb.from("admins").select("email").limit(1);
+  if(!admin||!admin.length){app.innerHTML='<div class="empty">This account does not have access to the queue.</div>';return}
+
+  let q=sb.from("drafts").select("*");
+  if(view==="pending") q=q.eq("status","pending").order("created_at",{ascending:true});
+  else q=q.neq("status","pending").gte("decided_at",new Date(Date.now()-7*864e5).toISOString()).order("decided_at",{ascending:false});
+  const {data,error}=await q.limit(200);
+  if(error){say("Could not load drafts: "+error.message);return}
+
+  const tabs=`<div class="tabs"><button data-v="pending" class="${view==="pending"?"on":""}">To review</button><button data-v="done" class="${view!=="pending"?"on":""}">Decided, last 7 days</button></div>`;
+  if(!data.length){app.innerHTML=tabs+`<div class="empty">${view==="pending"?"Nothing waiting. All clear.":"No decisions in the last 7 days."}</div>`;bindTabs();return}
+  app.innerHTML=tabs+`<div class="muted" style="margin-bottom:10px">${data.length} item${data.length>1?"s":""}</div>`+data.map(card).join("");
+  bindTabs(); bindCards();
+}
+
+function card(d){
+  const src=(d.source_urls||[]).map(safeUrl).filter(Boolean).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>`).join("<br>");
+  const decided=d.status!=="pending";
+  return `<div class="card" data-id="${d.id}">
+    <div class="meta"><span class="chip kind">${esc(KIND[d.kind]||d.kind)}</span>${d.hub?`<span class="chip">${esc(HUB[d.hub]||d.hub)}</span>`:""}<span class="chip">${esc(fmt(d.created_at))}</span>${d.created_by_job?`<span class="chip">${esc(d.created_by_job)}</span>`:""}</div>
+    <h2>${esc(d.title)}</h2>
+    <div class="body">${md(d.edited_body||d.body)}</div>
+    ${src?`<div class="sources"><strong>Sources</strong><br>${src}</div>`:`<div class="sources" style="color:var(--kill)">No source attached</div>`}
+    ${decided?`<div class="actions"><span class="status ${esc(d.status)}">${esc(d.status)} by ${esc(d.decided_by||"")} · ${d.decided_at?esc(fmt(d.decided_at)):""}</span>${d.decision_note?`<span class="muted">${esc(d.decision_note)}</span>`:""}</div>`:
+    `<div class="actions"><button class="approve" data-a="approve">Approve</button><button data-a="edit">Edit</button><button class="kill" data-a="kill">Kill</button></div><div class="editor"></div>`}
+  </div>`;
+}
+
+function bindTabs(){app.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v==="pending"?"pending":"done";say("");load()})}
+
+function bindCards(){
+  app.querySelectorAll(".card[data-id]").forEach(el=>{
+    const id=+el.dataset.id;
+    el.querySelectorAll("button[data-a]").forEach(b=>b.onclick=async()=>{
+      const a=b.dataset.a;
+      if(a==="approve") return decide(el,id,{status:"approved"});
+      if(a==="kill"){const note=prompt("Why kill it? (optional)");if(note===null)return;return decide(el,id,{status:"killed",decision_note:note||null})}
+      if(a==="edit"){
+        const ed=el.querySelector(".editor");
+        if(ed.innerHTML){ed.innerHTML="";return}
+        const {data}=await sb.from("drafts").select("body,edited_body").eq("id",id).single();
+        ed.innerHTML=`<textarea>${esc(data.edited_body||data.body)}</textarea><div class="actions"><button class="approve" data-s="1">Save and approve</button><button data-s="0">Save draft</button></div>`;
+        ed.querySelectorAll("button").forEach(sbtn=>sbtn.onclick=()=>{
+          const text=ed.querySelector("textarea").value;
+          decide(el,id,sbtn.dataset.s==="1"?{status:"approved",edited_body:text}:{edited_body:text},sbtn.dataset.s!=="1");
+        });
+      }
+    });
+  });
+}
+
+async function decide(el,id,patch,stay){
+  el.querySelectorAll("button").forEach(b=>b.disabled=true);
+  const {data,error}=await sb.from("drafts").update(patch).eq("id",id).select("id");
+  if(error||!data||!data.length){say("Could not save: "+(error?error.message:"no permission"));el.querySelectorAll("button").forEach(b=>b.disabled=false);return}
+  say(stay?"Edit saved.":patch.status==="approved"?"Approved.":"Killed.");
+  load();
+}
+
+document.getElementById("signout").onclick=async()=>{await sb.auth.signOut();say("");signInForm()};
+sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_IN"){history.replaceState(null,"",location.pathname);load()}});
+load();
+</script>
+</body>
+</html>
