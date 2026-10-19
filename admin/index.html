@@ -29,6 +29,10 @@
   .keywrap>summary::-webkit-details-marker{display:none}
   .keywrap>summary::after{content:" ▸";color:rgba(255,255,255,.5)}
   .keywrap[open]>summary::after{content:" ▾"}
+  .week{margin:0 0 6px}
+  .wrow{display:grid;grid-template-columns:44px 1fr;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.12);font-size:12.5px;color:rgba(255,255,255,.85);font-weight:300}
+  .wday{font-weight:600;color:var(--orange);font-size:12px;letter-spacing:.04em}
+  .wrow em{display:block;font-style:normal;color:#fff;font-weight:500;margin-top:2px}
   .keyintro{font-size:12.5px;color:rgba(255,255,255,.6);font-weight:300;margin:0 0 12px}
   .kjob{border-top:1px solid rgba(255,255,255,.12);padding:12px 0}
   .kjob summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -216,34 +220,48 @@ async function load(){
 
 // ---------- Key: what runs, when, what it gathers, where it goes ----------
 const JOBS=[
-  {name:"News check",when:"Weekdays 06:00",
-   gathers:"UK and European energy, utilities and infrastructure news since the last weekday: appointments, deals, exits, restructures, regulation. Scored 1 to 5 against your ICP; companies checked in Atlas.",
-   flow:["News items","Approval queue (score 3+)","The Brief: stories","Hub emails"]},
-  {name:"Index scan",when:"Sun and Thu 21:00",
-   gathers:"Senior roles (Head of, Director, C-suite) at the 214 watchlist employers: 121 read free from job feeds and careers pages, 93 via Hyreflow career-page reader. Plus a 10-country wider-market sweep and a UK HR pass.",
+  {name:"Index scan",when:"Tue and Fri 16:00",
+   gathers:"Senior roles (Head of, Director, C-suite) in the UK and Ireland only, at the 214 watchlist employers (121 read free from job feeds and careers pages, 93 via Hyreflow) plus a UK and Ireland wider-market sweep and HR pass.",
    flow:["Roles tab","Index headline + signals in queue","The Brief: Index and signals","HR hub"]},
-  {name:"Movers scan",when:"Weekdays 05:30",
-   gathers:"Senior appointments and departures from 13 trade press people pages (reNEWS, Energy Voice, Infrastructure Investor and others) and 156 watchlist newsrooms. Saves each move with the seat it leaves open; flags people already in Atlas.",
-   flow:["Movers tab"]},
-  {name:"Movers draft",when:"Fri 07:00",
-   gathers:"The week's best 5 to 12 moves, grouped by function, HR first.",
+  {name:"Movers scan",when:"Mon to Fri 16:15",
+   gathers:"Senior appointments and departures from 13 trade press people pages (reNEWS, Energy Voice, Infrastructure Investor and others) and 156 watchlist newsrooms. Saves each move with the seat it leaves open; flags people already in Atlas. For approved moves of people in Atlas, creates a congratulations task.",
+   flow:["Movers tab","Atlas congratulations tasks"]},
+  {name:"News check",when:"Mon to Fri 16:30",
+   gathers:"UK and European energy, utilities and infrastructure news since the last run: appointments, deals, exits, restructures, regulation. Scored 1 to 5 against your ICP; companies checked in Atlas.",
+   flow:["News items","Approval queue (score 3+)","The Brief: stories","Hub emails"]},
+  {name:"Movers draft",when:"Thu 17:30",
+   gathers:"The week's best 5 to 12 moves, grouped by function, HR first. Approve before Friday's Brief.",
    flow:["Movers draft in queue","The Brief: Movers","Hub Movers sections"]},
-  {name:"Brief draft",when:"Sun 23:00",
-   gathers:"The week's Index headline, approved signals and news. If fewer than 3 stories, it researches more. Leaves From my desk for you.",
+  {name:"Brief draft",when:"Fri 17:30",
+   gathers:"The week's Index headline, signals, Movers and news. If fewer than 3 stories, it researches more. Leaves From my desk for you.",
    flow:["One Brief draft in queue","On approval: /brief archive, Mon 07:00","Kit email (to come)"]},
+  {name:"Sunday top-up",when:"Sun 21:00, optional",
+   gathers:"Weekend news. If the Brief is still awaiting approval, adds up to 2 significant stories to it. If already approved, holds them for next week. If the laptop is closed, Friday's Brief stands.",
+   flow:["News in queue","The Brief (if not yet approved)"]},
   {name:"Newsletter draft",when:"Mon 08:00",
-   gathers:"Tuesday's episode transcript from the Episodes tab, plus one market theme from the week's news and Index.",
+   gathers:"Tomorrow's (Tuesday's) podcast episode transcript from the Episodes tab, plus one market theme from the week's news and Index. Sarah uploads the transcript beforehand.",
    flow:["Newsletter draft in queue","Ready to publish","You post on LinkedIn, Fri"]},
   {name:"Health check",when:"Hourly, and 09:00 daily",
    gathers:"Whether each job above ran on time. Runs stuck over 3 hours are marked failed. Runs on the database, so it works when the Mac is asleep.",
    flow:["Health tab","Badge on the Health button"]}
+];
+const WEEK=[
+  {d:"Mon",t:"07:00 The Brief goes out (once approved). 08:00 newsletter drafted from Tuesday's episode.",who:"Sarah: transcript in Episodes first"},
+  {d:"Tue",t:"Solving Infrastructure podcast episode goes out. 16:00 Index scan."},
+  {d:"Wed",t:"Daily scans from 16:00."},
+  {d:"Thu",t:"17:30 Movers drafted.",who:"You: approve Movers"},
+  {d:"Fri",t:"Solving Infrastructure newsletter on LinkedIn. 16:00 Index scan. 17:30 Brief drafted.",who:"You: post newsletter, approve Brief by Sunday"},
+  {d:"Sun",t:"21:00 optional weekend top-up to the Brief."},
+  {d:"Daily",t:"Mon to Fri: Movers scan 16:15, News check 16:30."}
 ];
 function renderKey(){
   const k=document.getElementById("key"); if(k.dataset.done)return; k.dataset.done=1;
   const jobs=JOBS.map(j=>`<details class="kjob"><summary><span class="kname">${esc(j.name)}</span><span class="kwhen">${esc(j.when)}</span></summary>
     <div class="krow"><b>Gathers</b>${esc(j.gathers)}</div>
     <div class="krow"><b>Feeds into</b><div class="kflow">${j.flow.map(esc).map(s=>`<span>${s}</span>`).join('<i>→</i>')}</div></div></details>`).join("");
-  k.innerHTML=`<details class="keywrap"${window.innerWidth>900?" open":""}><summary class="keyhead">How it runs</summary><p class="keyintro">Every job drafts into the queue. Nothing is published or sent without your approval. Jobs run only while the Mac is awake with Claude open. Tap a job for detail.</p>${jobs}</details>`;
+  const week=WEEK.map(w=>`<div class="wrow"><span class="wday">${esc(w.d)}</span><span>${esc(w.t)}${w.who?` <em>${esc(w.who)}</em>`:""}</span></div>`).join("");
+  k.innerHTML=`<details class="keywrap"${window.innerWidth>900?" open":""}><summary class="keyhead">The week</summary><div class="week">${week}</div></details>
+  <details class="keywrap"${window.innerWidth>900?" open":""}><summary class="keyhead">How it runs</summary><p class="keyintro">Every job drafts into the queue. Nothing is published or sent without your approval. Jobs run while Claude is open on the Mac; if it was closed, a missed job runs when Claude next opens. Tap a job for detail.</p>${jobs}</details>`;
 }
 
 const GOOD=["ok","partial","running"];
@@ -487,7 +505,7 @@ function renderMovers(){
       <select id="mstatus">${opt("","Any status",mf.status)}${opt("new","New",mf.status)}${opt("drafted","In a draft",mf.status)}${opt("approved","Approved",mf.status)}</select>
       <select id="mdays">${opt("7","Last 7 days",mf.days)}${opt("30","Last 30 days",mf.days)}${opt("90","Last 90 days",mf.days)}${opt("","All time",mf.days)}</select>
     </div><div class="actions" style="margin-top:8px"><button data-mq="hr">HR moves</button><button data-mq="reset">Clear filters</button></div></div>
-    <div class="muted" style="margin:6px 0 10px">${rows.length} of ${mvRows.length} moves · ${mvRows.filter(r=>r.atlas_match).length} people already in Atlas</div>`+(list||'<div class="empty">No moves yet. The first scan runs on the next weekday at 05:30.</div>');
+    <div class="muted" style="margin:6px 0 10px">${rows.length} of ${mvRows.length} moves · ${mvRows.filter(r=>r.atlas_match).length} people already in Atlas</div>`+(list||'<div class="empty">No moves yet. The scan runs Monday to Friday at 16:15.</div>');
   const bind=(id,key,ev="change")=>{const el=document.getElementById(id);el.addEventListener(ev,()=>{mf[key]=el.value;renderMovers();if(ev==="input"){const n=document.getElementById(id);n.focus();n.setSelectionRange(n.value.length,n.value.length)}})};
   bind("mq","q","input");bind("mfn","fn");bind("mscope","scope");bind("matlas","atlas");bind("mstatus","status");bind("mdays","days");
   app.querySelectorAll("button[data-mq]").forEach(b=>b.onclick=()=>{if(b.dataset.mq==="hr")mf={...mf,fn:"hr"};else mf={q:"",fn:"",scope:"",atlas:"",status:"",days:"30"};renderMovers()});
