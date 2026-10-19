@@ -33,6 +33,13 @@
   .epform label{display:block;margin:12px 0 4px}
   .epform textarea{min-height:100px;margin-top:0}
   .sources a,.body a{color:var(--accent)}
+  .rolefilters .frow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .rolefilters select{font:inherit;font-size:14px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);flex:1 1 160px;min-width:0}
+  .role{border-bottom:1px solid var(--line);padding:12px 2px}
+  .rtop{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .remp{font-weight:600}
+  .rtitle{margin:2px 0}
+  .rtitle a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--accent)}
   .signin{max-width:420px}
   .signin button{margin-top:10px}
   .tabs{display:flex;gap:8px;margin-bottom:16px}
@@ -49,7 +56,7 @@
     <div><h1 id="pagetitle">Approval queue</h1><div class="muted" id="who"></div></div>
     <button id="signout" hidden>Sign out</button>
   </header>
-  <nav class="tabs" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="episodes">Episodes</button></nav>
+  <nav class="tabs" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="roles">Roles</button><button data-m="episodes">Episodes</button></nav>
   <div id="msg"></div>
   <main id="app"></main>
 </div>
@@ -98,8 +105,9 @@ async function load(){
   if(!admin||!admin.length){app.innerHTML='<div class="empty">This account does not have access to the queue.</div>';return}
   document.getElementById("nav").hidden=false;
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
-  document.getElementById("pagetitle").textContent=mode==="episodes"?"Episodes":"Approval queue";
+  document.getElementById("pagetitle").textContent=mode==="episodes"?"Episodes":mode==="roles"?"Roles":"Approval queue";
   if(mode==="episodes") return loadEpisodes();
+  if(mode==="roles") return loadRoles();
 
   let q=sb.from("drafts").select("*");
   if(view==="pending") q=q.eq("status","pending").order("created_at",{ascending:true});
@@ -155,6 +163,83 @@ async function decide(el,id,patch,stay){
   if(error||!data||!data.length){say("Could not save: "+(error?error.message:"no permission"));el.querySelectorAll("button").forEach(b=>b.disabled=false);return}
   say(stay?"Edit saved.":patch.status==="approved"?"Approved.":"Killed.");
   load();
+}
+
+// ---------- Roles ----------
+const FN={ceo:"CEO",cfo:"CFO",coo:"COO",cco:"CCO",cio:"CIO / investment",hr:"HR / People",asset_management:"Asset management",portfolio_management:"Portfolio management",programme_management:"Programme management",construction:"Construction",strategy:"Strategy",origination:"Origination",commercial:"Commercial",operations:"Operations",engineering:"Engineering",regulation:"Regulation",hse:"HSE",legal:"Legal",other:"Other"};
+const LV={c_suite:"C-suite",director:"Director",head_of:"Head of",other:"Other"};
+let roleRows=[], rf={q:"",fn:"",sector:"",scope:"",state:"open",sig:"",sort:"new"};
+
+async function loadRoles(){
+  app.innerHTML='<p class="muted">Loading roles…</p>';
+  const {data,error}=await sb.from("vacancies").select("id,employer,role_title,level,function,sector,segment,country,location,url,source,first_seen,last_seen,closed_on,days_open,times_seen,repost_count,on_watchlist,ownership_tag").order("first_seen",{ascending:false}).limit(2000);
+  if(error){say("Could not load roles: "+error.message);return}
+  roleRows=data||[]; renderRoles();
+}
+
+function roleFilters(){
+  const sectors=[...new Set(roleRows.map(r=>r.sector).filter(Boolean))].sort();
+  const fns=[...new Set(roleRows.map(r=>r.function).filter(Boolean))].sort((a,b)=>(FN[a]||a).localeCompare(FN[b]||b));
+  const opt=(v,l,cur)=>`<option value="${esc(v)}"${v===cur?" selected":""}>${esc(l)}</option>`;
+  return `<div class="card rolefilters">
+    <input type="text" id="rq" placeholder="Search employer or title" value="${esc(rf.q)}">
+    <div class="frow">
+      <select id="rfn">${opt("","All functions",rf.fn)}${fns.map(f=>opt(f,FN[f]||f,rf.fn)).join("")}</select>
+      <select id="rsector">${opt("","All sectors",rf.sector)}${sectors.map(s=>opt(s,s,rf.sector)).join("")}</select>
+      <select id="rscope">${opt("","Watchlist and wider market",rf.scope)}${opt("watch","Watchlist only",rf.scope)}${opt("wider","Wider market only",rf.scope)}</select>
+      <select id="rstate">${opt("open","Open roles",rf.state)}${opt("closed","Closed roles",rf.state)}${opt("all","Open and closed",rf.state)}</select>
+      <select id="rsig">${opt("","Any signal",rf.sig)}${opt("repost","Reposted",rf.sig)}${opt("60","Open 60+ days",rf.sig)}${opt("csuite","C-suite",rf.sig)}${opt("multi","Employers with 2+ open roles",rf.sig)}${opt("new7","New in last 7 days",rf.sig)}</select>
+      <select id="rsort">${opt("new","Newest first",rf.sort)}${opt("days","Longest open first",rf.sort)}${opt("emp","Employer A–Z",rf.sort)}</select>
+    </div>
+    <div class="actions" style="margin-top:8px"><button data-quick="hr">HR roles</button><button data-quick="reset">Clear filters</button><button data-quick="csv">Download CSV</button></div>
+  </div>`;
+}
+
+function filteredRoles(){
+  const q=rf.q.trim().toLowerCase(), week=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+  const openCount={}; roleRows.forEach(r=>{if(!r.closed_on)openCount[r.employer]=(openCount[r.employer]||0)+1});
+  let rows=roleRows.filter(r=>{
+    if(q&&!(`${r.employer} ${r.role_title}`.toLowerCase().includes(q)))return false;
+    if(rf.fn&&r.function!==rf.fn)return false;
+    if(rf.sector&&r.sector!==rf.sector)return false;
+    if(rf.scope==="watch"&&!r.on_watchlist)return false;
+    if(rf.scope==="wider"&&r.on_watchlist)return false;
+    if(rf.state==="open"&&r.closed_on)return false;
+    if(rf.state==="closed"&&!r.closed_on)return false;
+    if(rf.sig==="repost"&&!(r.repost_count>0))return false;
+    if(rf.sig==="60"&&!(r.days_open>=60))return false;
+    if(rf.sig==="csuite"&&r.level!=="c_suite")return false;
+    if(rf.sig==="multi"&&!(openCount[r.employer]>=2))return false;
+    if(rf.sig==="new7"&&!(r.first_seen>=week))return false;
+    return true});
+  if(rf.sort==="days")rows.sort((a,b)=>(b.days_open||0)-(a.days_open||0));
+  else if(rf.sort==="emp")rows.sort((a,b)=>a.employer.localeCompare(b.employer));
+  return rows;
+}
+
+function renderRoles(){
+  const rows=filteredRoles();
+  const open=roleRows.filter(r=>!r.closed_on).length, hr=roleRows.filter(r=>!r.closed_on&&r.function==="hr").length;
+  const list=rows.slice(0,400).map(r=>{
+    const u=safeUrl(r.url);
+    return `<div class="role">
+      <div class="rtop"><span class="remp">${esc(r.employer)}</span>${r.on_watchlist?'<span class="chip kind">Watchlist</span>':''}${r.closed_on?'<span class="chip">Closed '+esc(fmtDate(r.closed_on))+'</span>':''}${r.repost_count>0?'<span class="chip" style="color:var(--kill);border-color:var(--kill)">Reposted ×'+r.repost_count+'</span>':''}</div>
+      <div class="rtitle">${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(r.role_title)}</a>`:esc(r.role_title)}</div>
+      <div class="muted">${esc(LV[r.level]||r.level||"")} · ${esc(FN[r.function]||r.function||"")} · ${esc(r.sector||"")} · ${esc(r.location||r.country||"")}</div>
+      <div class="muted">First seen ${esc(fmtDate(r.first_seen))} · ${r.days_open??0} days open · seen ${r.times_seen||1}×</div>
+    </div>`}).join("");
+  app.innerHTML=roleFilters()+`<div class="muted" style="margin:6px 0 10px">${rows.length} of ${roleRows.length} roles shown · ${open} open in total · ${hr} open HR roles${rows.length>400?" · showing the first 400":""}</div>`+(list||'<div class="empty">No roles match these filters.</div>');
+  const bind=(id,key,ev="change")=>{const el=document.getElementById(id);el.addEventListener(ev,()=>{rf[key]=el.value;renderRoles(); if(ev==="input"){const n=document.getElementById(id);n.focus();n.setSelectionRange(n.value.length,n.value.length)}})};
+  bind("rq","q","input");bind("rfn","fn");bind("rsector","sector");bind("rscope","scope");bind("rstate","state");bind("rsig","sig");bind("rsort","sort");
+  app.querySelectorAll("button[data-quick]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.quick;
+    if(k==="hr"){rf={...rf,fn:"hr",state:"open"};renderRoles()}
+    else if(k==="reset"){rf={q:"",fn:"",sector:"",scope:"",state:"open",sig:"",sort:"new"};renderRoles()}
+    else if(k==="csv"){
+      const cols=["employer","role_title","level","function","sector","country","location","on_watchlist","first_seen","last_seen","closed_on","days_open","times_seen","repost_count","url"];
+      const csv=[cols.join(",")].concat(filteredRoles().map(r=>cols.map(c=>`"${String(r[c]??"").replace(/"/g,'""')}"`).join(","))).join("\n");
+      const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="roles-"+new Date().toISOString().slice(0,10)+".csv";a.click();
+    }});
 }
 
 // ---------- Episodes ----------
