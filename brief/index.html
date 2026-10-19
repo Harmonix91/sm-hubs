@@ -93,9 +93,17 @@
 const sb = supabase.createClient("https://hmjebqoeqffqljfyasys.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtamVicW9lcWZmcWxqZnlhc3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjc2MzEsImV4cCI6MjEwNzg0MzYzMX0.OZMx5dlkf4yp0akhU92t_K5BDN2N9hDhZeh-PzF7B2g",{auth:{persistSession:false}});
 const app=document.getElementById("app");
 
-document.getElementById("signup").addEventListener("submit",e=>{
-  const f=e.target;
-  setTimeout(()=>{f.outerHTML='<div class="thanks">Thank you. Check your inbox and confirm your email to start receiving The Brief.</div>';document.getElementById("fine").remove()},400);
+document.getElementById("signup").addEventListener("submit",async e=>{
+  const f=e.target, btn=f.querySelector("button"), fine=document.getElementById("fine");
+  e.preventDefault(); btn.disabled=true;
+  try{
+    const r=await fetch(f.action,{method:"POST",body:new FormData(f),headers:{Accept:"application/json"}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.status!=="success") throw new Error("failed");
+    f.outerHTML='<div class="thanks">Thank you. Check your inbox and confirm your email to start receiving The Brief.</div>'; fine.remove();
+  }catch(err){
+    btn.disabled=false; fine.textContent="Something went wrong. Please try again, or email info@sonderandmetric.com.";
+  }
 });
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
