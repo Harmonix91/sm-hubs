@@ -130,7 +130,7 @@
 <div class="shell">
   <aside class="side">
     <div class="brand">Sonder &amp; Metric<small>Control room</small></div>
-    <nav class="sidenav" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="roles">Roles</button><button data-m="episodes">Episodes</button><button data-m="health" id="healthnav">Health</button></nav>
+    <nav class="sidenav" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="roles">Roles</button><button data-m="movers">Movers</button><button data-m="episodes">Episodes</button><button data-m="health" id="healthnav">Health</button></nav>
     <div class="key" id="key"></div>
     <div class="sidefoot"><span id="who"></span><br><button id="signout" hidden>Sign out</button></div>
   </aside>
@@ -191,10 +191,11 @@ async function load(){
   document.getElementById("nav").hidden=false;
   document.body.classList.remove("gate"); renderKey();
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
-  document.getElementById("pagetitle").textContent={episodes:"Episodes",roles:"Roles",health:"Job health"}[mode]||"Approval queue";
-  document.getElementById("eyebrow").textContent={episodes:"Podcast transcripts",roles:"Leadership Signals Index",health:"Scheduled jobs"}[mode]||"Daily review";
+  document.getElementById("pagetitle").textContent={episodes:"Episodes",roles:"Roles",movers:"Movers",health:"Job health"}[mode]||"Approval queue";
+  document.getElementById("eyebrow").textContent={episodes:"Podcast transcripts",roles:"Leadership Signals Index",movers:"Senior appointments",health:"Scheduled jobs"}[mode]||"Daily review";
   updateHealthNav();
   if(mode==="health") return loadHealth();
+  if(mode==="movers") return loadMovers();
   if(mode==="episodes") return loadEpisodes();
   if(mode==="roles") return loadRoles();
 
@@ -221,6 +222,12 @@ const JOBS=[
   {name:"Index scan",when:"Sun and Thu 21:00",
    gathers:"Senior roles (Head of, Director, C-suite) at the 214 watchlist employers: 121 read free from job feeds and careers pages, 93 via Hyreflow career-page reader. Plus a 10-country wider-market sweep and a UK HR pass.",
    flow:["Roles tab","Index headline + signals in queue","The Brief: Index and signals","HR hub"]},
+  {name:"Movers scan",when:"Weekdays 05:30",
+   gathers:"Senior appointments and departures from 13 trade press people pages (reNEWS, Energy Voice, Infrastructure Investor and others) and 156 watchlist newsrooms. Saves each move with the seat it leaves open; flags people already in Atlas.",
+   flow:["Movers tab"]},
+  {name:"Movers draft",when:"Fri 07:00",
+   gathers:"The week's best 5 to 12 moves, grouped by function, HR first.",
+   flow:["Movers draft in queue","The Brief: Movers","Hub Movers sections"]},
   {name:"Brief draft",when:"Sun 23:00",
    gathers:"The week's Index headline, approved signals and news. If fewer than 3 stories, it researches more. Leaves From my desk for you.",
    flow:["One Brief draft in queue","On approval: /brief archive, Mon 07:00","Kit email (to come)"]},
@@ -444,6 +451,46 @@ function renderRoles(){
       const csv=[cols.join(",")].concat(filteredRoles().map(r=>cols.map(c=>`"${String(r[c]??"").replace(/"/g,'""')}"`).join(","))).join("\n");
       const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="roles-"+new Date().toISOString().slice(0,10)+".csv";a.click();
     }});
+}
+
+// ---------- Movers ----------
+const MT={external_hire:"External hire",internal_promotion:"Promotion",departure:"Departure",board:"Board",interim:"Interim",other:"Other"};
+let mvRows=[], mf={q:"",fn:"",scope:"",atlas:"",status:"",days:"30"};
+async function loadMovers(){
+  app.innerHTML='<p class="muted">Loading moves…</p>';
+  const {data,error}=await sb.from("appointments").select("id,person_name,role_title,level,function,to_company,to_watchlist_id,from_company,from_role,sector,country,announced_date,move_type,seat_left_open,source_url,source_name,atlas_match,status").order("announced_date",{ascending:false,nullsFirst:false}).limit(2000);
+  if(error){say("Could not load moves: "+error.message);return}
+  mvRows=data||[]; renderMovers();
+}
+function renderMovers(){
+  const opt=(v,l,cur)=>`<option value="${esc(v)}"${v===cur?" selected":""}>${esc(l)}</option>`;
+  const fns=[...new Set(mvRows.map(r=>r.function).filter(Boolean))].sort((a,b)=>(FN[a]||a).localeCompare(FN[b]||b));
+  const since=new Date(Date.now()-(+mf.days||3650)*864e5).toISOString().slice(0,10), q=mf.q.trim().toLowerCase();
+  const rows=mvRows.filter(r=>{
+    if(q&&!(`${r.person_name} ${r.role_title} ${r.to_company} ${r.from_company||""}`.toLowerCase().includes(q)))return false;
+    if(mf.fn&&r.function!==mf.fn)return false;
+    if(mf.scope==="watch"&&!r.to_watchlist_id)return false;
+    if(mf.atlas==="yes"&&!r.atlas_match)return false;
+    if(mf.status&&r.status!==mf.status)return false;
+    if(mf.days&&r.announced_date&&r.announced_date<since)return false;
+    return true});
+  const list=rows.slice(0,400).map(r=>{const u=safeUrl(r.source_url);return `<div class="role">
+    <div class="rtop"><span class="remp">${esc(r.person_name)}</span>${r.to_watchlist_id?'<span class="chip kind">Watchlist</span>':''}${r.atlas_match?`<span class="chip" style="color:var(--ok);border-color:var(--ok)">In Atlas: ${esc(r.atlas_match)}</span>`:""}<span class="chip">${esc(MT[r.move_type]||r.move_type||"")}</span><span class="chip">${esc(r.status)}</span></div>
+    <div class="rtitle">${esc(r.role_title)} at <strong>${esc(r.to_company)}</strong>${r.from_company?` <span class="muted">from ${esc(r.from_role?r.from_role+", ":"")}${esc(r.from_company)}</span>`:""}</div>
+    ${r.seat_left_open?`<div style="margin:4px 0"><span class="muted">Seat:</span> ${esc(r.seat_left_open)}</div>`:""}
+    <div class="muted">${esc(FN[r.function]||r.function||"")} · ${esc(r.sector||"")} · ${esc(r.country||"")} · ${r.announced_date?esc(fmtDate(r.announced_date)):""}${u?` · <a href="${esc(u)}" target="_blank" rel="noopener">${esc(r.source_name||"Source")}</a>`:""}</div></div>`}).join("");
+  app.innerHTML=`<div class="card rolefilters"><input type="text" id="mq" placeholder="Search person, role or company" value="${esc(mf.q)}">
+    <div class="frow">
+      <select id="mfn">${opt("","All functions",mf.fn)}${fns.map(f=>opt(f,FN[f]||f,mf.fn)).join("")}</select>
+      <select id="mscope">${opt("","All employers",mf.scope)}${opt("watch","Watchlist employers only",mf.scope)}</select>
+      <select id="matlas">${opt("","Atlas and new",mf.atlas)}${opt("yes","Already in Atlas",mf.atlas)}</select>
+      <select id="mstatus">${opt("","Any status",mf.status)}${opt("new","New",mf.status)}${opt("drafted","In a draft",mf.status)}${opt("approved","Approved",mf.status)}</select>
+      <select id="mdays">${opt("7","Last 7 days",mf.days)}${opt("30","Last 30 days",mf.days)}${opt("90","Last 90 days",mf.days)}${opt("","All time",mf.days)}</select>
+    </div><div class="actions" style="margin-top:8px"><button data-mq="hr">HR moves</button><button data-mq="reset">Clear filters</button></div></div>
+    <div class="muted" style="margin:6px 0 10px">${rows.length} of ${mvRows.length} moves · ${mvRows.filter(r=>r.atlas_match).length} people already in Atlas</div>`+(list||'<div class="empty">No moves yet. The first scan runs on the next weekday at 05:30.</div>');
+  const bind=(id,key,ev="change")=>{const el=document.getElementById(id);el.addEventListener(ev,()=>{mf[key]=el.value;renderMovers();if(ev==="input"){const n=document.getElementById(id);n.focus();n.setSelectionRange(n.value.length,n.value.length)}})};
+  bind("mq","q","input");bind("mfn","fn");bind("mscope","scope");bind("matlas","atlas");bind("mstatus","status");bind("mdays","days");
+  app.querySelectorAll("button[data-mq]").forEach(b=>b.onclick=()=>{if(b.dataset.mq==="hr")mf={...mf,fn:"hr"};else mf={q:"",fn:"",scope:"",atlas:"",status:"",days:"30"};renderMovers()});
 }
 
 // ---------- Episodes ----------
