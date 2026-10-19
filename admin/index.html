@@ -4,78 +4,137 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Approval Queue</title>
+<meta name="theme-color" content="#0F4A5E">
+<title>Control Room | Sonder &amp; Metric</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230F4A5E'/%3E%3Ctext x='32' y='46' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='42' font-weight='600' fill='%23FFFFFF' text-anchor='middle'%3E%26amp;%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--bg:#f7f7f5;--card:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e3e2dd;--ok:#1f7a4a;--kill:#a3332b;--accent:#d9682b}
-  @media (prefers-color-scheme: dark){:root{--bg:#141413;--card:#1f1f1d;--ink:#ecebe6;--muted:#a19f97;--line:#33322f;--ok:#4cba7f;--kill:#e0675d;--accent:#ee8a50}}
+  :root{--teal:#0F4A5E;--teal2:#0b3a4a;--orange:#DB6F2A;--paper:#F6F8F9;--ink:#1C2E38;--mist:#9FB7C0;
+    --bg:#F6F8F9;--card:#fff;--muted:#5d727c;--line:#dfe7ea;--ok:#1f7a4a;--kill:#b2402f;--accent:#DB6F2A}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 64px}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
-  h1{font-size:22px;margin:0}
-  .muted{color:var(--muted);font-size:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
-  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-  .chip{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-  .chip.kind{border-color:var(--accent);color:var(--accent)}
-  h2{font-size:17px;margin:0 0 8px}
-  .body p{margin:0 0 8px}
-  .sources{font-size:13px;margin-top:6px;word-break:break-all}
-  .sources a{color:var(--muted)}
-  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-  button{font:inherit;font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-  button.approve{background:var(--ok);border-color:var(--ok);color:#fff}
-  button.kill{color:var(--kill);border-color:var(--kill)}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 'Poppins',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--teal)}
+  /* layout */
+  .shell{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+  .side{background:var(--teal);color:#fff;padding:26px 22px 40px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .brand{font-size:19px;font-weight:600;letter-spacing:.01em}
+  .brand small{display:block;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--orange);font-weight:600;margin-top:4px}
+  .sidenav{display:flex;flex-direction:column;gap:4px;margin:28px 0 8px}
+  .sidenav button{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,.72);font-weight:500;font-size:14px}
+  .sidenav button:hover{background:rgba(255,255,255,.07);color:#fff}
+  .sidenav button.on{background:#fff;color:var(--teal);font-weight:600}
+  .sidenav button.on .dot.g{box-shadow:0 0 0 2px #fff}
+  .keyhead{margin:30px 0 10px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--orange);font-weight:600}
+  .keywrap>summary{list-style:none;cursor:pointer}
+  .keywrap>summary::-webkit-details-marker{display:none}
+  .keywrap>summary::after{content:" ▸";color:rgba(255,255,255,.5)}
+  .keywrap[open]>summary::after{content:" ▾"}
+  .keyintro{font-size:12.5px;color:rgba(255,255,255,.6);font-weight:300;margin:0 0 12px}
+  .kjob{border-top:1px solid rgba(255,255,255,.12);padding:12px 0}
+  .kjob summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .kjob summary::-webkit-details-marker{display:none}
+  .kname{font-weight:600;font-size:14px}
+  .kwhen{font-size:11.5px;color:var(--orange);white-space:nowrap;font-weight:500}
+  .krow{font-size:12.5px;color:rgba(255,255,255,.78);font-weight:300;margin-top:8px}
+  .krow b{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:2px}
+  .kflow{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .kflow span{background:rgba(255,255,255,.1);border-radius:99px;padding:1px 8px;font-size:11.5px;color:#fff}
+  .kflow i{font-style:normal;color:var(--orange)}
+  .sidefoot{margin-top:26px;font-size:12px;color:rgba(255,255,255,.5)}
+  .sidefoot button{all:unset;cursor:pointer;color:#fff;text-decoration:underline;text-decoration-color:var(--orange);text-underline-offset:3px}
+  .main{padding:34px 40px 70px;max-width:980px;width:100%}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:22px}
+  .eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--orange);font-weight:600;margin-bottom:6px}
+  h1{font-size:30px;margin:0;font-weight:600;letter-spacing:-.02em;color:var(--teal)}
+  #who{font-size:13px;color:var(--muted)}
+  .muted{color:var(--muted);font-size:13.5px}
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,74,94,.04),0 6px 18px rgba(15,74,94,.05)}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chip{font-size:11.5px;padding:2px 10px;border-radius:99px;background:var(--paper);border:1px solid var(--line);color:var(--muted);font-weight:500}
+  .chip.kind{background:rgba(219,111,42,.1);border-color:rgba(219,111,42,.35);color:#b5561b}
+  h2{font-size:17px;margin:0 0 10px;font-weight:600;color:var(--ink)}
+  .body p{margin:0 0 10px}
+  .body strong{font-weight:600}
+  .sources{font-size:12.5px;margin-top:8px;word-break:break-all;padding-top:10px;border-top:1px dashed var(--line)}
+  .sources a,.body a{color:var(--teal);text-decoration-color:var(--orange);text-underline-offset:2px}
+  .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
+  button{font:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+  button:hover{border-color:var(--mist)}
+  button.approve{background:var(--teal);border-color:var(--teal);color:#fff}
+  button.approve:hover{background:var(--teal2)}
+  button.kill{color:var(--kill);border-color:rgba(178,64,47,.35)}
   button:disabled{opacity:.5;cursor:default}
-  textarea,input[type=email],input[type=text]{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-  textarea{min-height:180px;margin-top:10px}
-  input[type=date],input[type=file]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+  textarea,input[type=email],input[type=text]{width:100%;font:inherit;font-size:14px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);outline:none}
+  textarea:focus,input:focus,select:focus{border-color:var(--teal)}
+  textarea{min-height:200px;margin-top:10px}
+  input[type=date],input[type=file]{font:inherit;font-size:14px;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:100%}
   .epform label{display:block;margin:12px 0 4px}
   .epform textarea{min-height:100px;margin-top:0}
-  .sources a,.body a{color:var(--accent)}
+  /* roles */
   .rolefilters .frow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .rolefilters select{font:inherit;font-size:14px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);flex:1 1 160px;min-width:0}
-  .role{border-bottom:1px solid var(--line);padding:12px 2px}
+  .rolefilters select{font:inherit;font-size:13.5px;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);flex:1 1 170px;min-width:0}
+  .role{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:8px}
   .rtop{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .remp{font-weight:600}
-  .rtitle{margin:2px 0}
-  .rtitle a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--accent)}
-  .health{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;background:var(--card);font-size:14px}
-  .health summary{cursor:pointer;font-weight:600}
-  .health.good summary{color:var(--ok)} .health.bad summary,.health.warn{color:var(--kill)}
-  .health ul{list-style:none;padding:0;margin:8px 0 0}
-  .health li{padding:6px 0;border-top:1px solid var(--line)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
-  .dot.g{background:var(--ok)} .dot.r{background:var(--kill)}
-  .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:99px;background:var(--kill);color:#fff;font-size:12px;line-height:18px;text-align:center;margin-left:4px}
-  .tabs{flex-wrap:wrap}
-  .hday{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
-  .hday summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none}
+  .remp{font-weight:600;color:var(--teal)}
+  .rtitle{margin:3px 0;font-weight:500}
+  .rtitle a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--orange);text-underline-offset:3px}
+  /* health */
+  .health{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px;background:#fff;font-size:14px}
+  .health.good{border-left:4px solid var(--ok)} .health.bad,.health.warn{border-left:4px solid var(--kill)}
+  .health.good strong{color:var(--ok)} .health.bad strong,.health.warn{color:var(--kill)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .dot.g{background:#3fbf7f} .dot.r{background:#e2604c}
+  .badge{display:inline-block;min-width:20px;padding:0 6px;border-radius:99px;background:var(--orange);color:#fff;font-size:11.5px;line-height:20px;text-align:center;margin-left:6px;font-weight:600}
+  .hday{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+  .hday summary{cursor:pointer;padding:14px 16px;font-weight:600;list-style:none}
   .hday summary::-webkit-details-marker{display:none}
   .hday summary::after{content:"▸";float:right;color:var(--muted)}
   .hday[open] summary::after{content:"▾"}
-  .hitem{border-top:1px solid var(--line);padding:10px 14px}
-  .publish{border-top:1px solid var(--line);margin-top:12px;padding-top:8px}
+  .hday[open] summary{background:var(--paper)}
+  .hitem{border-top:1px solid var(--line);padding:12px 16px}
+  /* publish */
+  .publish{border-top:1px solid var(--line);margin-top:14px;padding-top:6px}
   .publish input{flex:1 1 260px}
-  .signin{max-width:420px}
-  .signin button{margin-top:10px}
-  .tabs{display:flex;gap:8px;margin-bottom:16px}
-  .tabs button.on{border-color:var(--ink)}
-  .status{font-size:13px;font-weight:600}
+  /* sub tabs */
+  .tabs{display:inline-flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px}
+  .tabs button{border:none;background:transparent;color:var(--muted);padding:7px 14px;border-radius:9px}
+  .tabs button.on{background:var(--teal);color:#fff}
+  .status{font-size:12.5px;font-weight:600;text-transform:capitalize}
   .status.approved,.status.published{color:var(--ok)} .status.killed{color:var(--kill)}
-  .empty{text-align:center;padding:40px 16px;color:var(--muted)}
-  .msg{padding:10px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);margin-bottom:14px;font-size:14px}
+  .empty{text-align:center;padding:50px 16px;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:14px}
+  .msg{padding:12px 14px;border-radius:12px;background:rgba(219,111,42,.08);border:1px solid rgba(219,111,42,.3);margin-bottom:16px;font-size:14px}
+  /* sign in */
+  .signin{max-width:440px}
+  .signin button{margin-top:12px}
+  .gate .side .sidenav,.gate .side .key,.gate #signout{display:none}
+  /* mobile */
+  @media(max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .side{position:static;height:auto;padding:18px 16px 14px}
+    .sidenav{flex-direction:row;flex-wrap:wrap;margin:14px 0 0}
+    .sidenav button{padding:8px 12px}
+    .key{margin-top:6px}
+    .main{padding:22px 16px 60px}
+    h1{font-size:24px}
+  }
 </style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <div><h1 id="pagetitle">Approval queue</h1><div class="muted" id="who"></div></div>
-    <button id="signout" hidden>Sign out</button>
-  </header>
-  <nav class="tabs" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="roles">Roles</button><button data-m="episodes">Episodes</button><button data-m="health" id="healthnav">Health</button></nav>
-  <div id="msg"></div>
-  <main id="app"></main>
+<body class="gate">
+<div class="shell">
+  <aside class="side">
+    <div class="brand">Sonder &amp; Metric<small>Control room</small></div>
+    <nav class="sidenav" id="nav" hidden><button data-m="queue" class="on">Approval queue</button><button data-m="roles">Roles</button><button data-m="episodes">Episodes</button><button data-m="health" id="healthnav">Health</button></nav>
+    <div class="key" id="key"></div>
+    <div class="sidefoot"><span id="who"></span><br><button id="signout" hidden>Sign out</button></div>
+  </aside>
+  <div class="main">
+    <header>
+      <div><div class="eyebrow" id="eyebrow">Daily review</div><h1 id="pagetitle">Approval queue</h1></div>
+    </header>
+    <div id="msg"></div>
+    <main id="app"></main>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -100,6 +159,9 @@ function fmt(d){return new Date(d).toLocaleString("en-GB",{weekday:"short",day:"
 function signInForm(){
   document.getElementById("signout").hidden=true;
   document.getElementById("nav").hidden=true;
+  document.body.classList.add("gate");
+  document.getElementById("pagetitle").textContent="Sign in";
+  document.getElementById("eyebrow").textContent="Sonder & Metric";
   document.getElementById("who").textContent="";
   app.innerHTML=`<div class="card signin">
     <p>Enter your work email. We'll send you a sign-in link.</p>
@@ -121,8 +183,10 @@ async function load(){
   const {data:admin}=await sb.from("admins").select("email").limit(1);
   if(!admin||!admin.length){app.innerHTML='<div class="empty">This account does not have access to the queue.</div>';return}
   document.getElementById("nav").hidden=false;
+  document.body.classList.remove("gate"); renderKey();
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
   document.getElementById("pagetitle").textContent={episodes:"Episodes",roles:"Roles",health:"Job health"}[mode]||"Approval queue";
+  document.getElementById("eyebrow").textContent={episodes:"Podcast transcripts",roles:"Leadership Signals Index",health:"Scheduled jobs"}[mode]||"Daily review";
   updateHealthNav();
   if(mode==="health") return loadHealth();
   if(mode==="episodes") return loadEpisodes();
@@ -141,6 +205,32 @@ async function load(){
   if(!data.length){app.innerHTML=tabs+`<div class="empty">${emptyMsg}</div>`;bindTabs();return}
   app.innerHTML=tabs+`<div class="muted" style="margin-bottom:10px">${data.length} item${data.length>1?"s":""}</div>`+data.map(card).join("");
   bindTabs(); bindCards();
+}
+
+// ---------- Key: what runs, when, what it gathers, where it goes ----------
+const JOBS=[
+  {name:"News check",when:"Weekdays 06:00",
+   gathers:"UK and European energy, utilities and infrastructure news since the last weekday: appointments, deals, exits, restructures, regulation. Scored 1 to 5 against your ICP; companies checked in Atlas.",
+   flow:["News items","Approval queue (score 3+)","The Brief: stories","Hub emails"]},
+  {name:"Index scan",when:"Sun and Thu 21:00",
+   gathers:"Senior roles (Head of, Director, C-suite) at the 214 watchlist employers: 121 read free from job feeds and careers pages, 93 via Hyreflow career-page reader. Plus a 10-country wider-market sweep and a UK HR pass.",
+   flow:["Roles tab","Index headline + signals in queue","The Brief: Index and signals","HR hub"]},
+  {name:"Brief draft",when:"Sun 23:00",
+   gathers:"The week's Index headline, approved signals and news. If fewer than 3 stories, it researches more. Leaves From my desk for you.",
+   flow:["One Brief draft in queue","On approval: /brief archive, Mon 07:00","Kit email (to come)"]},
+  {name:"Newsletter draft",when:"Mon 08:00",
+   gathers:"Tuesday's episode transcript from the Episodes tab, plus one market theme from the week's news and Index.",
+   flow:["Newsletter draft in queue","Ready to publish","You post on LinkedIn, Fri"]},
+  {name:"Health check",when:"Hourly, and 09:00 daily",
+   gathers:"Whether each job above ran on time. Runs stuck over 3 hours are marked failed. Runs on the database, so it works when the Mac is asleep.",
+   flow:["Health tab","Badge on the Health button"]}
+];
+function renderKey(){
+  const k=document.getElementById("key"); if(k.dataset.done)return; k.dataset.done=1;
+  const jobs=JOBS.map(j=>`<details class="kjob"><summary><span class="kname">${esc(j.name)}</span><span class="kwhen">${esc(j.when)}</span></summary>
+    <div class="krow"><b>Gathers</b>${esc(j.gathers)}</div>
+    <div class="krow"><b>Feeds into</b><div class="kflow">${j.flow.map(esc).map(s=>`<span>${s}</span>`).join('<i>→</i>')}</div></div></details>`).join("");
+  k.innerHTML=`<details class="keywrap"${window.innerWidth>900?" open":""}><summary class="keyhead">How it runs</summary><p class="keyintro">Every job drafts into the queue. Nothing is published or sent without your approval. Jobs run only while the Mac is awake with Claude open. Tap a job for detail.</p>${jobs}</details>`;
 }
 
 const GOOD=["ok","partial","running"];
