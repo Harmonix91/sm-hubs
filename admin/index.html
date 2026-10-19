@@ -49,6 +49,14 @@
   .dot.g{background:var(--ok)} .dot.r{background:var(--kill)}
   .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:99px;background:var(--kill);color:#fff;font-size:12px;line-height:18px;text-align:center;margin-left:4px}
   .tabs{flex-wrap:wrap}
+  .hday{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+  .hday summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none}
+  .hday summary::-webkit-details-marker{display:none}
+  .hday summary::after{content:"▸";float:right;color:var(--muted)}
+  .hday[open] summary::after{content:"▾"}
+  .hitem{border-top:1px solid var(--line);padding:10px 14px}
+  .publish{border-top:1px solid var(--line);margin-top:12px;padding-top:8px}
+  .publish input{flex:1 1 260px}
   .signin{max-width:420px}
   .signin button{margin-top:10px}
   .tabs{display:flex;gap:8px;margin-bottom:16px}
@@ -122,12 +130,15 @@ async function load(){
 
   let q=sb.from("drafts").select("*");
   if(view==="pending") q=q.eq("status","pending").order("created_at",{ascending:true});
+  else if(view==="ready") q=q.eq("status","approved").eq("kind","newsletter").is("published_url",null).order("created_at",{ascending:true});
   else q=q.neq("status","pending").gte("decided_at",new Date(Date.now()-7*864e5).toISOString()).order("decided_at",{ascending:false});
   const {data,error}=await q.limit(200);
   if(error){say("Could not load drafts: "+error.message);return}
 
-  const tabs=`<div class="tabs"><button data-v="pending" class="${view==="pending"?"on":""}">To review</button><button data-v="done" class="${view!=="pending"?"on":""}">Decided, last 7 days</button></div>`;
-  if(!data.length){app.innerHTML=tabs+`<div class="empty">${view==="pending"?"Nothing waiting. All clear.":"No decisions in the last 7 days."}</div>`;bindTabs();return}
+  const tb=(v,l)=>`<button data-v="${v}" class="${view===v?"on":""}">${l}</button>`;
+  const tabs=`<div class="tabs">${tb("pending","To review")}${tb("ready","Ready to publish")}${tb("done","Decided, last 7 days")}</div>`;
+  const emptyMsg={pending:"Nothing waiting. All clear.",ready:"No approved newsletters waiting to go on LinkedIn.",done:"No decisions in the last 7 days."}[view];
+  if(!data.length){app.innerHTML=tabs+`<div class="empty">${emptyMsg}</div>`;bindTabs();return}
   app.innerHTML=tabs+`<div class="muted" style="margin-bottom:10px">${data.length} item${data.length>1?"s":""}</div>`+data.map(card).join("");
   bindTabs(); bindCards();
 }
@@ -153,9 +164,18 @@ async function loadHealth(){
   if(!d){app.innerHTML='<div class="health warn">Job health could not be checked just now.</div>';return}
   updateHealthNav();
   const bad=d.jobs.filter(j=>!GOOD.includes(j.state));
-  const rows=d.jobs.map(j=>`<div class="card"><div class="meta"><span class="chip" style="${GOOD.includes(j.state)?"color:var(--ok);border-color:var(--ok)":"color:var(--kill);border-color:var(--kill)"}">${esc(HLABEL[j.state]||j.state)}</span><span class="chip">${esc(j.schedule)}</span>${j.run_id?`<span class="chip">Run ${j.run_id}</span>`:""}</div>
-    <h2>${esc(j.label)}</h2><div class="muted">Last expected run: ${esc(fmt(j.expected_at))}</div>${j.detail?`<p style="margin:8px 0 0">${esc(j.detail)}</p>`:""}</div>`).join("");
-  app.innerHTML=`<div class="health ${bad.length?"bad":"good"}"><strong>${bad.length?`${bad.length} job${bad.length>1?"s":""} need attention`:"All scheduled jobs ran"}</strong><div class="muted">Checked ${esc(fmt(d.checked_at))}. Jobs only run while the Mac is awake with Claude open. Runs stuck for over 3 hours are marked failed automatically.</div></div>`+rows;
+  const top=`<div class="health ${bad.length?"bad":"good"}"><strong>${bad.length?`Latest runs: ${bad.length} job${bad.length>1?"s":""} need attention (${bad.map(j=>esc(j.label)).join(", ")})`:"Latest runs: all scheduled jobs ran"}</strong><div class="muted">Checked ${esc(fmt(d.checked_at))}. Jobs only run while the Mac is awake with Claude open. Runs stuck for over 3 hours are marked failed automatically.</div></div>`;
+  app.innerHTML=top+'<p class="muted">Loading history…</p>';
+  const {data:hist,error}=await sb.rpc("health_history",{p_days:30});
+  if(error||!hist){app.innerHTML=top+'<div class="health warn">Run history could not be loaded.</div>';return}
+  const dayLabel=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+  const tfmt=s=>new Date(s).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  const days=hist.map(day=>{
+    const items=day.items.map(j=>`<div class="hitem"><div class="meta"><span class="chip" style="${GOOD.includes(j.state)?"color:var(--ok);border-color:var(--ok)":"color:var(--kill);border-color:var(--kill)"}">${esc(HLABEL[j.state]||j.state)}</span><span class="chip">${esc(j.schedule)}</span>${j.run_id?`<span class="chip">Run ${j.run_id}</span>`:""}${j.credits>0?`<span class="chip">${esc(j.credits)} credits</span>`:""}</div>
+      <strong>${esc(j.label)}</strong> <span class="muted">${esc(tfmt(j.at))}${j.finished_at?" to "+esc(tfmt(j.finished_at)):""}${j.items_found!=null&&j.run_id?` · ${j.items_found} found, ${j.items_saved??0} saved`:""}</span>${j.detail?`<div class="muted" style="margin-top:4px">${esc(j.detail)}</div>`:""}</div>`).join("");
+    return `<details class="hday"><summary><span class="dot ${day.problems?"r":"g"}"></span>${esc(dayLabel(day.date))}<span class="muted"> · ${day.items.length} run${day.items.length>1?"s":""}</span>${day.problems?` <span class="badge">${day.problems}</span>`:""}</summary>${items}</details>`;
+  }).join("");
+  app.innerHTML=top+`<h2 style="margin:18px 0 8px">Run history, last 30 days</h2>`+(days||'<div class="empty">No runs yet.</div>');
 }
 
 function card(d){
@@ -166,16 +186,55 @@ function card(d){
     <h2>${esc(d.title)}</h2>
     <div class="body">${md(d.edited_body||d.body)}</div>
     ${src?`<div class="sources"><strong>Sources</strong><br>${src}</div>`:`<div class="sources" style="color:var(--kill)">No source attached</div>`}
-    ${decided?`<div class="actions"><span class="status ${esc(d.status)}">${esc(d.status)} by ${esc(d.decided_by||"")} · ${d.decided_at?esc(fmt(d.decided_at)):""}</span>${d.decision_note?`<span class="muted">${esc(d.decision_note)}</span>`:""}</div>`:
+    ${decided?`<div class="actions"><span class="status ${esc(d.status)}">${esc(d.status)} by ${esc(d.decided_by||"")} · ${d.decided_at?esc(fmt(d.decided_at)):""}</span>${d.decision_note?`<span class="muted">${esc(d.decision_note)}</span>`:""}${d.published_url&&safeUrl(d.published_url)?`<a class="muted" href="${esc(safeUrl(d.published_url))}" target="_blank" rel="noopener">View on LinkedIn</a>`:""}</div>
+    ${d.kind==="newsletter"&&d.status==="approved"&&!d.published_url?`<div class="publish"><div class="actions"><button class="approve" data-p="copy">Copy for LinkedIn</button></div>
+      <label class="muted" style="display:block;margin-top:12px">Once it is live or scheduled, paste the LinkedIn link here</label>
+      <div class="actions" style="margin-top:6px"><input type="text" data-p="url" placeholder="https://www.linkedin.com/pulse/..."><button data-p="mark">Mark as published</button></div></div>`:""}`:
     `<div class="actions"><button class="approve" data-a="approve">Approve</button><button data-a="edit">Edit</button><button class="kill" data-a="kill">Kill</button></div><div class="editor"></div>`}
   </div>`;
 }
 
-function bindTabs(){app.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v==="pending"?"pending":"done";say("");load()})}
+function bindTabs(){app.querySelectorAll(".tabs button[data-v]").forEach(b=>b.onclick=()=>{view=b.dataset.v;say("");load()})}
+
+// Rich HTML for pasting into LinkedIn's article editor
+function inl(t){return t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2">$1</a>')}
+function richHtml(src){
+  const lines=esc(src).split("\n");let html="",list=false,para=[];
+  const flush=()=>{if(para.length){html+="<p>"+inl(para.join(" "))+"</p>";para=[]}};
+  for(const raw of lines){const l=raw.trim();
+    if(/^[-*] /.test(l)){flush();if(!list){html+="<ul>";list=true}html+="<li>"+inl(l.slice(2))+"</li>";continue}
+    if(list){html+="</ul>";list=false}
+    if(!l){flush();continue}
+    const h=l.match(/^(#{1,3})\s+(.*)$/);
+    if(h){flush();html+=h[1].length===1?`<h1>${inl(h[2])}</h1>`:`<h2>${inl(h[2])}</h2>`;continue}
+    const b=l.match(/^\*\*(.+)\*\*:?$/);
+    if(b){flush();html+=`<h2>${b[1]}</h2>`;continue}
+    para.push(l)}
+  flush();if(list)html+="</ul>";return html}
+function plainText(src){return src.replace(/\*\*(.+?)\*\*/g,"$1").replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,"$1 ($2)").replace(/^#{1,3}\s+/gm,"")}
+async function copyForLinkedIn(text){
+  try{
+    await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([richHtml(text)],{type:"text/html"}),"text/plain":new Blob([plainText(text)],{type:"text/plain"})})]);
+    say("Copied with formatting. In LinkedIn: Write article, choose the Solving Infrastructure newsletter, paste, add a cover image, then schedule for Friday.");
+  }catch(e){
+    const ta=document.createElement("textarea");ta.value=plainText(text);document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();
+    say("Copied as plain text (this browser blocked formatted copy). Headings and bold will need setting in LinkedIn.");
+  }
+}
 
 function bindCards(){
   app.querySelectorAll(".card[data-id]").forEach(el=>{
     const id=+el.dataset.id;
+    const pc=el.querySelector('button[data-p="copy"]'), pm=el.querySelector('button[data-p="mark"]');
+    if(pc) pc.onclick=async()=>{const {data}=await sb.from("drafts").select("body,edited_body").eq("id",id).single(); if(data) copyForLinkedIn(data.edited_body||data.body)};
+    if(pm) pm.onclick=async()=>{
+      const u=el.querySelector('input[data-p="url"]').value.trim();
+      if(!/^https:\/\/([a-z]+\.)?linkedin\.com\//i.test(u)){say("Paste the LinkedIn link of the published or scheduled article first.");return}
+      pm.disabled=true;
+      const {data,error}=await sb.from("drafts").update({published_url:u,published_at:new Date().toISOString()}).eq("id",id).select("id");
+      if(error||!data||!data.length){pm.disabled=false;say("Could not save: "+(error?error.message:"no permission"));return}
+      say("Marked as published."); load();
+    };
     el.querySelectorAll("button[data-a]").forEach(b=>b.onclick=async()=>{
       const a=b.dataset.a;
       if(a==="approve") return decide(el,id,{status:"approved"});
