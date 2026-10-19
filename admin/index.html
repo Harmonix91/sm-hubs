@@ -577,5 +577,6 @@ document.getElementById("signout").onclick=async()=>{await sb.auth.signOut();say
 sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_IN"){history.replaceState(null,"",location.pathname);load()}});
 load();
 </script>
+<script src="hubs-tab.js"></script>
 </body>
 </html>
