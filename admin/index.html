@@ -40,6 +40,13 @@
   .remp{font-weight:600}
   .rtitle{margin:2px 0}
   .rtitle a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--accent)}
+  .health{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;background:var(--card);font-size:14px}
+  .health summary{cursor:pointer;font-weight:600}
+  .health.good summary{color:var(--ok)} .health.bad summary,.health.warn{color:var(--kill)}
+  .health ul{list-style:none;padding:0;margin:8px 0 0}
+  .health li{padding:6px 0;border-top:1px solid var(--line)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+  .dot.g{background:var(--ok)} .dot.r{background:var(--kill)}
   .signin{max-width:420px}
   .signin button{margin-top:10px}
   .tabs{display:flex;gap:8px;margin-bottom:16px}
@@ -115,10 +122,20 @@ async function load(){
   const {data,error}=await q.limit(200);
   if(error){say("Could not load drafts: "+error.message);return}
 
-  const tabs=`<div class="tabs"><button data-v="pending" class="${view==="pending"?"on":""}">To review</button><button data-v="done" class="${view!=="pending"?"on":""}">Decided, last 7 days</button></div>`;
+  const health=await healthBanner();
+  const tabs=health+`<div class="tabs"><button data-v="pending" class="${view==="pending"?"on":""}">To review</button><button data-v="done" class="${view!=="pending"?"on":""}">Decided, last 7 days</button></div>`;
   if(!data.length){app.innerHTML=tabs+`<div class="empty">${view==="pending"?"Nothing waiting. All clear.":"No decisions in the last 7 days."}</div>`;bindTabs();return}
   app.innerHTML=tabs+`<div class="muted" style="margin-bottom:10px">${data.length} item${data.length>1?"s":""}</div>`+data.map(card).join("");
   bindTabs(); bindCards();
+}
+
+async function healthBanner(){
+  const {data,error}=await sb.rpc("health_summary");
+  if(error||!data) return `<div class="health warn">Job health could not be checked just now.</div>`;
+  const label={ok:"ran",partial:"ran with gaps",running:"running now",failed:"failed",stalled:"stalled",missed:"did not run"};
+  const bad=data.jobs.filter(j=>!["ok","partial","running"].includes(j.state));
+  const rows=data.jobs.map(j=>`<li><span class="dot ${["ok","partial","running"].includes(j.state)?"g":"r"}"></span><strong>${esc(j.label)}</strong> (${esc(j.schedule)}): ${esc(label[j.state]||j.state)} · ${esc(fmt(j.expected_at))}${j.detail&&!["ok","running"].includes(j.state)?`<div class="muted">${esc(j.detail)}</div>`:""}</li>`).join("");
+  return `<details class="health ${bad.length?"bad":"good"}"${bad.length?" open":""}><summary>${bad.length?`${bad.length} job${bad.length>1?"s":""} need attention`:"All scheduled jobs ran"}</summary><ul>${rows}</ul></details>`;
 }
 
 function card(d){
