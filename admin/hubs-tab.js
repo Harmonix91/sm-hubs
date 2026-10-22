@@ -116,3 +116,6 @@
     });
   }
 })();
+
+// Home tab (the Control room landing page) lives in home-tab.js
+(function(){ const s = document.createElement("script"); s.src = "home-tab.js"; document.body.appendChild(s); })();
