@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Asset Management in Infrastructure | Sonder &amp; Metric</title>
+<meta name="theme-color" content="#0A1D26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230F4A5E'/%3E%3Ctext x='32' y='46' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='42' font-weight='600' fill='%23FFFFFF' text-anchor='middle'%3E%26amp;%3C/text%3E%3C/svg%3E">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --ground:#0A1D26;--deep:#0C2F3C;--teal:#0F4A5E;--line:#2D5B6B;--mist:#9FB7C0;--ice:#D9E7EB;--paper:#F6F8F9;--ink:#12303E;--dim:#6F8C97;
+  --signal:#DB6F2A;--signal-2:#F29A5B;
+  --f:'Poppins',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.7,0,.2,1);--out:cubic-bezier(.16,1,.3,1);
+  --gut:clamp(16px,6vw,96px);
+  color-scheme:dark;
+}
+html{scroll-padding-top:84px}
+body{margin:0;background:var(--ground);color:var(--paper);font-family:var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3,h4{margin:0;font-weight:600;text-wrap:balance}
+p{margin:0}
+button{font:inherit}
+.sig{color:var(--signal)}
+.mono{font-family:var(--mono)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:40;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--gut);background:rgba(10,29,38,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(45,91,107,.5)}
+.nav-l{display:flex;align-items:center;gap:22px;min-width:0}
+.wm{font-weight:600;font-size:18px;letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
+.wm b{color:var(--signal);font-weight:500}
+.crumb{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);display:flex;gap:10px;align-items:center;white-space:nowrap;overflow:hidden}
+.crumb a{text-decoration:none;color:var(--mist);transition:color .2s}
+.crumb a:hover{color:var(--paper)}
+.crumb .cur{color:var(--paper)}
+.crumb i{width:6px;height:6px;background:var(--signal);display:block;flex:none}
+.nav-r{display:flex;gap:12px;align-items:center;font-size:13px;color:var(--mist)}
+.nbtn{all:unset;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);padding:8px 13px;color:var(--ice);transition:all .25s;white-space:nowrap}
+.nbtn:hover{border-color:var(--mist);color:#fff}
+.nbtn.o{background:var(--signal);border-color:var(--signal);color:var(--ground);font-weight:500}
+.nbtn.o:hover{background:var(--signal-2)}
+.nbtn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+@media(max-width:760px){.hide-sm{display:none!important}.crumb{display:none}}
+#progress{position:fixed;top:0;left:0;height:2px;background:var(--signal);width:0;z-index:41}
+
+/* tier badges */
+.tb{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);color:var(--mist);white-space:nowrap}
+.tb::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.tb.open{color:#8FD0B8;border-color:rgba(143,208,184,.4)}
+.tb.member{color:var(--ice);border-color:rgba(217,231,235,.4)}
+.tb.inner{color:var(--signal-2);border-color:rgba(219,111,42,.6)}
+.tb.admin{color:#fff;border-color:#fff}
+.tb.soon{color:var(--dim)}
+.tb.soon::before{background:none;border:1px solid currentColor}
+
+/* ---------- page transitions ---------- */
+#app{min-height:100vh;transition:opacity .32s ease,transform .45s var(--ease),filter .4s}
+#app.leave-in{opacity:0;transform:scale(1.035);filter:blur(4px)}
+#app.leave-out{opacity:0;transform:scale(.975);filter:blur(4px)}
+#app.enter{animation:enter .7s var(--out) both}
+@keyframes enter{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+[data-r]{opacity:0;transform:translateY(24px);transition:opacity .9s var(--out),transform .9s var(--out);transition-delay:calc(var(--d,0) * 1s)}
+[data-r].in{opacity:1;transform:none}
+
+/* ---------- home hero ---------- */
+.hero{position:relative;min-height:88svh;display:flex;flex-direction:column;justify-content:center;padding:170px var(--gut) 120px;overflow:hidden;
+  background:radial-gradient(1200px 800px at 80% 15%,rgba(15,74,94,.6),transparent 60%),var(--ground)}
+#net{position:absolute;inset:0;width:100%;height:100%}
+.hero-in{position:relative;z-index:2;max-width:1180px}
+.hero h1{font-size:clamp(38px,5.4vw,80px);line-height:1.1;letter-spacing:-.025em;margin:28px 0 0;max-width:900px}
+.h1-sub{display:block;font-weight:300;color:var(--ice);font-size:.62em;letter-spacing:-.015em;margin-top:14px;line-height:1.2}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:72px;align-items:center}
+@media(max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:48px}}
+.access{background:rgba(10,29,38,.86);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:34px 32px;box-shadow:0 40px 100px rgba(0,0,0,.45);position:relative}
+.access::before{content:"";position:absolute;left:-1px;top:-1px;width:56px;height:3px;background:var(--signal)}
+.access h3{font-size:24px;margin:10px 0 6px}
+.access .sub{font-size:14px;color:var(--mist);line-height:1.6}
+.access form{display:grid;gap:10px;margin-top:22px}
+.access input{font:inherit;font-size:16px;padding:15px 16px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;border-radius:0;outline:none;transition:border-color .2s}
+.access input:focus{border-color:var(--mist)}
+.access .btn{justify-content:center}
+.access .or{display:flex;align-items:center;gap:14px;margin:26px 0 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.access .or::before,.access .or::after{content:"";flex:1;height:1px;background:var(--line)}
+.access .free{width:100%;justify-content:center;border-color:var(--signal);color:var(--signal-2)}
+.access .free:hover{background:var(--signal);color:var(--ground)}
+.access .note{font-size:12px;color:var(--dim);margin-top:10px;text-align:center}
+.access .amsg{font-size:14px;line-height:1.6;margin-top:14px;border-left:3px solid var(--signal);padding-left:12px}
+.access .amsg.err{border-color:#E06A5A;color:#F3B3AA}
+.hero .lead{font-size:clamp(16px,1.3vw,19px);line-height:1.8;font-weight:300;color:var(--ice);max-width:580px;margin-top:36px}
+.hero-cta{position:relative;z-index:2;display:flex;gap:14px;flex-wrap:wrap;margin-top:52px;align-items:center}
+.hero-cta .note{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+.stats{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);margin-top:80px;max-width:1100px;border-top:1px solid var(--line)}
+.stat{padding:24px 24px 0 0;border-right:1px solid rgba(45,91,107,.5);margin-right:24px}
+.stat:last-child{border-right:none}
+.stat .v{font-size:clamp(32px,3.6vw,54px);font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.stat.hi .v{color:var(--signal)}
+.stat .l{font-size:13px;color:var(--mist);margin-top:10px;line-height:1.45}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.stat{border-right:none;margin-right:0;padding-bottom:18px;border-bottom:1px solid rgba(45,91,107,.5)}}
+
+/* ---------- generic blocks ---------- */
+.sec{position:relative;padding:130px var(--gut);border-top:1px solid rgba(45,91,107,.4)}
+.sec.deep{background:linear-gradient(180deg,var(--deep),var(--ground))}
+.sec.light{background:var(--paper);color:var(--ink);border-top:none}
+.sh{display:grid;grid-template-columns:120px 1fr;gap:24px;margin-bottom:64px}
+.sh .n{font-family:var(--mono);font-size:13px;color:var(--signal);padding-top:12px;letter-spacing:.08em}
+.sh h2{font-size:clamp(28px,3.6vw,50px);line-height:1.12;letter-spacing:-.025em}
+.sh p{font-size:17px;line-height:1.8;font-weight:300;color:var(--ice);max-width:660px;margin-top:16px}
+.light .sh p{color:#33505C}
+@media(max-width:760px){.sh{grid-template-columns:1fr;gap:6px}.sh .n{padding-top:0}.sec{padding:80px var(--gut)}}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:14px 20px;border:1px solid var(--line);color:var(--ice);text-decoration:none;cursor:pointer;background:none;transition:all .3s}
+.btn:hover{border-color:var(--mist);color:#fff}
+.btn.o{background:var(--signal);border-color:var(--signal);color:var(--ground);font-weight:500}
+.btn.o:hover{background:var(--signal-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.empty{border:1px dashed var(--line);padding:32px;color:var(--mist);font-size:15px;line-height:1.6}
+
+/* what / pillars */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.three > div{background:var(--ground);padding:36px 32px;display:flex;flex-direction:column;gap:14px;min-height:260px}
+.three .k{font-family:var(--mono);font-size:12px;color:var(--signal)}
+.three h3{font-size:26px;letter-spacing:-.01em;margin-top:auto}
+.three p{font-size:15px;line-height:1.6;color:var(--mist)}
+.three svg{width:56px;height:56px}
+@media(max-width:900px){.three{grid-template-columns:1fr}.three > div{min-height:0}}
+
+/* why */
+.why{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:72px;align-items:center}
+.why blockquote{margin:0;font-size:clamp(24px,2.7vw,38px);line-height:1.3;font-weight:600;letter-spacing:-.02em;position:relative}
+.why blockquote::before{content:"\201C";position:absolute;left:-6px;top:-74px;font-size:130px;color:var(--signal);line-height:1}
+.why .body p{font-size:17px;line-height:1.7;font-weight:300;color:var(--ice);margin-bottom:18px}
+@media(max-width:900px){.why{grid-template-columns:1fr;gap:40px}}
+
+/* who */
+.who{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px}
+.who .body p{font-size:16px;line-height:1.7;font-weight:300;color:#33505C;margin-bottom:16px}
+.facts{display:grid;gap:0;border-top:1px solid #C9D7DD}
+.facts div{display:grid;grid-template-columns:160px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid #C9D7DD;font-size:15px}
+.facts b{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5C7682;padding-top:3px}
+.light .btn{color:var(--teal);border-color:#9FB7C0}
+.light .btn:hover{border-color:var(--teal)}
+@media(max-width:900px){.who{grid-template-columns:1fr;gap:36px}.facts div{grid-template-columns:1fr;gap:4px}}
+
+.founder{display:grid;grid-template-columns:150px 1fr;gap:26px;align-items:center;margin-bottom:32px}
+.founder .ph-wrap{position:relative;aspect-ratio:1;overflow:hidden;border:1px solid #C9D7DD}
+.founder .ph-wrap::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--signal);transition:width 1.2s var(--out) .6s}
+.in .founder .ph-wrap::after{width:100%}
+.founder img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08);transition:transform 1.6s var(--out) .2s}
+.in .founder img{transform:none}
+.founder b{display:block;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.founder span{display:block;font-size:14px;color:#5C7682;margin-top:4px}
+@media(max-width:520px){.founder{grid-template-columns:110px 1fr;gap:18px}}
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:80px;align-items:start}
+.about blockquote{margin:0 0 28px;font-size:clamp(24px,2.6vw,36px);line-height:1.3;font-weight:600;letter-spacing:-.02em;color:var(--teal);position:relative;padding-top:40px}
+.about blockquote::before{content:"\201C";position:absolute;left:-4px;top:-28px;font-size:110px;color:var(--signal);line-height:1}
+.about p{font-size:16px;line-height:1.8;font-weight:300;color:#33505C;margin-bottom:24px}
+@media(max-width:900px){.about{grid-template-columns:1fr;gap:40px}}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+.tile{grid-column:span 2;position:relative;border:1px solid var(--line);padding:30px 28px 26px;min-height:300px;display:flex;flex-direction:column;text-decoration:none;overflow:hidden;cursor:pointer;transition:border-color .35s,transform .5s var(--out),background .35s}
+.tile:nth-child(1),.tile:nth-child(2){grid-column:span 3}
+.tile::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at var(--mx,80%) var(--my,0%),rgba(219,111,42,.14),transparent 60%);opacity:0;transition:opacity .4s}
+.tile:hover{border-color:var(--mist);transform:translateY(-4px);background:rgba(15,74,94,.18)}
+.tile:hover::after{opacity:1}
+.tile .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tile .n{font-family:var(--mono);font-size:12px;color:var(--signal)}
+.tile h3{font-size:clamp(26px,2.6vw,38px);letter-spacing:-.02em;margin-top:auto;padding-top:60px}
+.tile p{font-size:14px;line-height:1.6;color:var(--mist);margin-top:10px;max-width:440px}
+.tile .foot{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(45,91,107,.6);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tile .arrow{width:34px;height:34px;border:1px solid var(--line);display:grid;place-items:center;font-size:15px;color:var(--mist);transition:all .35s var(--out)}
+.tile:hover .arrow{background:var(--signal);border-color:var(--signal);color:var(--ground);transform:rotate(-45deg)}
+.tile .lockic{position:absolute;right:26px;top:70px;opacity:.9}
+.tile.locked h3{color:var(--ice)}
+.tile .glyph{position:absolute;right:-20px;bottom:40px;opacity:.16;transition:opacity .4s,transform .8s var(--out)}
+.tile:hover .glyph{opacity:.3;transform:translateX(-10px)}
+@media(max-width:1000px){.tiles{grid-template-columns:1fr 1fr}.tile,.tile:nth-child(1),.tile:nth-child(2){grid-column:span 1}}
+@media(max-width:620px){.tiles{grid-template-columns:1fr}}
+
+/* access ladder */
+.ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative}
+.ladder::before{content:"";position:absolute;left:0;right:0;top:46px;height:1px;background:var(--line)}
+.ladder::after{content:"";position:absolute;left:0;top:46px;height:1px;width:var(--fill,0%);background:linear-gradient(90deg,#8FD0B8,var(--signal));transition:width 1.6s var(--out) .3s}
+.ladder.in::after{width:var(--to,0%)}
+.rung{position:relative;padding:0 32px 0 0}
+.rung .dot{width:92px;height:92px;border-radius:50%;border:1.5px solid var(--line);background:var(--ground);display:grid;place-items:center;position:relative;z-index:1;transition:all .5s var(--out)}
+.rung .dot svg{width:34px;height:34px}
+.rung.reached .dot{border-color:var(--mist)}
+.rung.here .dot{border-color:var(--signal);box-shadow:0 0 0 10px rgba(219,111,42,.12)}
+.rung.here .dot::after{content:"You are here";position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--signal-2);white-space:nowrap}
+.rung h3{font-size:26px;margin-top:28px}
+.rung .how{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--signal-2);margin-top:8px}
+.rung ul{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px}
+.rung li{font-size:14px;color:var(--ice);padding-left:22px;position:relative;line-height:1.5}
+.rung li::before{content:"";position:absolute;left:0;top:10px;width:12px;height:1px;background:var(--mist)}
+@media(max-width:900px){.ladder{grid-template-columns:1fr;gap:44px}.ladder::before,.ladder::after{display:none}}
+.cta-band{margin-top:64px;border:1px solid var(--line);padding:32px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;background:rgba(15,74,94,.15)}
+.cta-band h3{font-size:22px}
+.cta-band p{font-size:14px;color:var(--mist);margin-top:6px}
+
+/* ---------- section pages ---------- */
+.ph{padding:140px var(--gut) 56px;position:relative;overflow:hidden;background:radial-gradient(900px 500px at 85% 0%,rgba(15,74,94,.55),transparent 60%),var(--ground)}
+.back{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);text-decoration:none;margin-bottom:40px;transition:gap .3s var(--out),color .2s}
+.back:hover{gap:16px;color:#fff}
+.ph .row1{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ph .n{font-family:var(--mono);font-size:13px;color:var(--signal)}
+.ph h1{font-size:clamp(40px,5.6vw,80px);line-height:1.06;letter-spacing:-.035em;margin-top:18px}
+.ph .lead{font-size:clamp(16px,1.3vw,19px);line-height:1.8;font-weight:300;color:var(--ice);max-width:700px;margin-top:22px}
+.ph .bignum{position:absolute;right:var(--gut);bottom:-40px;font-size:clamp(160px,22vw,340px);font-weight:600;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(219,111,42,.35);letter-spacing:-.05em;pointer-events:none}
+.pbody{padding:24px var(--gut) 110px}
+.pnav{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding:28px var(--gut);font-size:14px;flex-wrap:wrap}
+.pnav a{text-decoration:none;display:flex;flex-direction:column;gap:4px;color:var(--ice)}
+.pnav a small{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.pnav a:hover{color:var(--signal-2)}
+
+/* tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:40px;overflow-x:auto}
+.tab{all:unset;cursor:pointer;padding:18px 22px;font-size:15px;color:var(--mist);position:relative;white-space:nowrap;display:flex;gap:10px;align-items:center;transition:color .25s}
+.tab b{font-family:var(--mono);font-weight:400;font-size:11px;border:1px solid var(--line);padding:2px 7px;color:var(--mist)}
+.tab::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--signal);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--out)}
+.tab:hover{color:#fff}
+.tab.on{color:#fff}
+.tab.on::after{transform:none}
+.tab.on b{border-color:var(--signal);color:var(--signal-2)}
+.tab:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+.panel{animation:enter .55s var(--out) both}
+.summary{display:flex;gap:28px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.summary span b{color:var(--paper);font-weight:500;font-size:14px;margin-right:6px}
+
+/* rows (seats) */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{all:unset;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);padding:8px 13px;color:var(--mist);transition:all .25s}
+.chip:hover{color:#fff;border-color:var(--mist)}
+.chip.on{background:var(--signal);border-color:var(--signal);color:var(--ground)}
+.rows{border-top:1px solid var(--line)}
+.rowi{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 150px 28px;gap:22px;align-items:center;padding:22px 0;border-bottom:1px solid rgba(45,91,107,.6);text-decoration:none;position:relative;transition:padding .4s var(--out),background .3s;animation:enter .6s var(--out) both;animation-delay:calc(var(--i) * 60ms)}
+.rowi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--signal);transform:scaleY(0);transition:transform .35s var(--out)}
+.rowi:hover{padding-left:16px;background:rgba(15,74,94,.22)}
+.rowi:hover::before{transform:none}
+.rowi .t{font-size:18px;font-weight:600;line-height:1.3}
+.rowi .e{font-size:14px;color:var(--mist);margin-top:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.wl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);padding:2px 6px;color:var(--mist)}
+.rowi .meta{font-size:13px;color:var(--ice);line-height:1.5}
+.rowi .meta small{display:block;color:var(--mist);font-size:12px}
+.age{font-family:var(--mono);font-size:11px;color:var(--mist);letter-spacing:.06em}
+.age .tr{height:4px;background:rgba(45,91,107,.6);margin-top:8px;position:relative;overflow:hidden}
+.age .tr i{position:absolute;inset:0;background:linear-gradient(90deg,var(--mist),var(--signal));transform-origin:left;animation:grow 1.3s var(--out) both;animation-delay:calc(var(--i) * 60ms + .3s);transform:scaleX(var(--w))}
+@keyframes grow{from{transform:scaleX(0)}}
+.rowi .go{font-size:18px;color:var(--mist);transition:transform .3s var(--out),color .3s}
+.rowi:hover .go{transform:translate(4px,-4px);color:var(--signal)}
+@media(max-width:760px){.rowi{grid-template-columns:1fr 24px}.rowi .meta,.rowi .age{grid-column:1}.rowi .go{grid-row:1;grid-column:2}}
+.seats-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:56px}
+@media(max-width:1000px){.seats-wrap{grid-template-columns:1fr}}
+.side h4{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin-bottom:18px}
+.bars{display:grid;gap:14px;margin-bottom:44px}
+.bar{display:grid;grid-template-columns:1fr 26px;gap:12px;font-size:13px;color:var(--ice)}
+.bar .tr{grid-column:1/-1;height:6px;background:rgba(45,91,107,.5);position:relative}
+.bar .tr i{position:absolute;left:0;top:0;bottom:0;width:var(--w);background:var(--mist);transform-origin:left;animation:grow 1.3s var(--out) both;animation-delay:calc(var(--i) * .12s + .2s)}
+.bar:first-child .tr i{background:var(--signal)}
+.bar b{font-family:var(--mono);font-weight:400;text-align:right;color:var(--mist)}
+.sigcard{border:1px solid var(--line);padding:20px 22px;margin-bottom:14px;position:relative}
+.sigcard::before,.sigcard::after{content:"+";position:absolute;font-family:var(--mono);color:var(--line);font-size:14px}
+.sigcard::before{left:-5px;top:-11px}.sigcard::after{right:-5px;bottom:-11px}
+.sigcard h5{margin:0 0 8px;font-size:15px;line-height:1.35;font-weight:600}
+.sigcard p{font-size:13px;line-height:1.6;color:var(--mist)}
+.sigcard p strong{color:var(--signal-2);font-weight:500}
+
+/* stories */
+.stories{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px}
+.story{background:var(--paper);color:var(--ink);padding:30px;display:flex;flex-direction:column;gap:14px;text-decoration:none;transition:transform .45s var(--out),box-shadow .45s;animation:enter .6s var(--out) both;animation-delay:calc(var(--i) * 80ms)}
+.story:hover{transform:translateY(-6px);box-shadow:0 30px 60px rgba(0,0,0,.35)}
+.story .k{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5C7682}
+.story h3{font-size:20px;line-height:1.3;color:var(--teal)}
+.story p{font-size:14px;line-height:1.65;color:#33505C}
+.story .imp{margin-top:auto;background:#fff;border-left:3px solid var(--signal);padding:14px 16px}
+.story .imp small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#B4561B;margin-bottom:6px}
+.story .imp p{color:var(--ink)}
+.intro{border:1px dashed var(--line);padding:22px 26px;font-size:15px;line-height:1.65;color:var(--mist);font-style:italic;max-width:820px;margin-bottom:36px}
+
+/* moves */
+.mv-empty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center}
+@media(max-width:900px){.mv-empty{grid-template-columns:1fr}}
+.mv-empty h3{font-size:28px;line-height:1.25;margin-bottom:14px}
+.mv-empty p{font-size:16px;line-height:1.65;color:var(--ice);font-weight:300}
+.flow{width:100%;height:auto;display:block}
+.flow .path{stroke-dasharray:6 8;animation:dash 18s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-560}}
+.flow .seatbox{animation:breathe 3.6s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.45}}
+.mv-line{position:relative;padding-left:44px;border-left:1px solid var(--line);margin-left:8px}
+.mv{position:relative;padding:0 0 40px;animation:enter .6s var(--out) both;animation-delay:calc(var(--i) * 80ms)}
+.mv::before{content:"";position:absolute;left:-50px;top:7px;width:11px;height:11px;border-radius:50%;background:var(--ground);border:1.5px solid var(--mist)}
+.mv:first-child::before{border-color:var(--signal);background:var(--signal)}
+.mv .d{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist)}
+.mv h3{font-size:21px;margin:8px 0 6px}
+.mv p{font-size:15px;color:var(--ice);line-height:1.6}
+.mv .seat{margin-top:12px;border-left:2px solid var(--signal);padding-left:14px;font-size:14px;color:var(--mist)}
+
+/* cards (toolkit etc) */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:1000px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);padding:30px;display:flex;flex-direction:column;gap:14px;position:relative;text-decoration:none;min-height:280px;transition:border-color .35s,transform .5s var(--out),background .35s;animation:enter .6s var(--out) both;animation-delay:calc(var(--i,0) * 90ms)}
+a.card:hover{border-color:var(--mist);transform:translateY(-4px);background:rgba(15,74,94,.18)}
+.card .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card .k{font-family:var(--mono);font-size:12px;color:var(--signal)}
+.card h3{font-size:24px;line-height:1.2;margin-top:auto}
+.card p{font-size:14px;line-height:1.6;color:var(--mist)}
+.card .more{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal-2);display:flex;gap:8px;align-items:center}
+.card.ph-card h3{color:var(--dim);font-weight:500}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:64px;align-items:start}
+@media(max-width:1000px){.split{grid-template-columns:1fr}}
+.copy p{font-size:16px;line-height:1.7;font-weight:300;color:var(--ice);margin-bottom:16px}
+.copy ul{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:12px}
+.copy li{padding-left:28px;position:relative;font-size:15px;color:var(--ice)}
+.copy li::before{content:"";position:absolute;left:0;top:11px;width:14px;height:1px;background:var(--signal)}
+.mock{border:1px solid var(--line);background:rgba(10,29,38,.75);box-shadow:0 40px 100px rgba(0,0,0,.4);position:relative}
+.mock .bar-top{display:flex;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist)}
+.mock .bar-top b{color:var(--signal-2);font-weight:500}
+.sc{padding:22px 20px;display:grid;gap:16px}
+.sc-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 28px;gap:14px;align-items:center;font-size:14px;color:var(--ice)}
+.sc-row .tr{height:6px;background:rgba(45,91,107,.55);position:relative}
+.sc-row .tr i{position:absolute;inset:0;width:var(--w);background:var(--mist);transform-origin:left;animation:grow 1.2s var(--out) both;animation-delay:calc(var(--i) * .14s + .4s)}
+.sc-row:nth-child(2) .tr i{background:var(--signal)}
+.sc-row span{font-family:var(--mono);color:var(--mist);text-align:right}
+.stamp-sample{position:absolute;right:-10px;top:-14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:var(--signal);color:var(--ground);padding:5px 9px;transform:rotate(2deg);z-index:3}
+.wave{display:flex;gap:3px;align-items:center;height:46px}
+.wave i{flex:1;background:var(--line);border-radius:1px;height:var(--h);animation:eq 1.6s ease-in-out infinite;animation-delay:calc(var(--i) * -.09s)}
+.card:hover .wave i{background:var(--signal)}
+@keyframes eq{50%{transform:scaleY(.35)}}
+.poll{display:grid;gap:10px}
+.poll div{border:1px solid var(--line);padding:12px 14px;font-size:14px;color:var(--dim);position:relative;overflow:hidden}
+.poll div i{position:absolute;left:0;top:0;bottom:0;width:var(--w);background:rgba(45,91,107,.35);transform-origin:left;animation:grow 1.4s var(--out) both;animation-delay:calc(var(--i) * .15s + .4s)}
+.poll div span{position:relative}
+.comp-rows{padding:24px 20px;display:grid;gap:22px}
+.comp-row{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:center;font-size:13px;color:var(--ice)}
+.comp-row .rg{position:relative;height:10px;background:rgba(45,91,107,.4)}
+.comp-row .rg i{position:absolute;top:0;bottom:0;left:var(--a);width:var(--w);background:linear-gradient(90deg,var(--mist),var(--signal))}
+
+/* ---------- gating ---------- */
+.gated{position:relative}
+.veil{filter:blur(7px);opacity:.35;pointer-events:none;user-select:none}
+.lockcard{position:absolute;inset:0;display:grid;place-items:center;padding:20px;z-index:5}
+.lockcard > div{background:rgba(10,29,38,.92);border:1px solid var(--line);padding:30px 32px;max-width:440px;text-align:left;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:enter .7s var(--out) both .15s}
+.lockcard .lk{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.lockcard h3{font-size:22px;line-height:1.25;margin-bottom:8px}
+.lockcard p{font-size:14px;line-height:1.6;color:var(--ice);font-weight:300}
+.lockcard .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.lockcard .pend{margin-top:16px;font-size:13px;color:var(--signal-2);border-left:2px solid var(--signal);padding-left:12px}
+.lockic svg{display:block}
+.lock-anim .shackle{transition:transform .5s var(--out)}
+.tile:hover .lock-anim .shackle{transform:translateY(-3px)}
+.skel{display:grid;gap:14px}
+.skel i{display:block;height:14px;background:rgba(159,183,192,.18);width:var(--w,100%)}
+.skel .blk{border:1px solid var(--line);padding:22px;display:grid;gap:12px}
+.soon-note{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);border:1px dashed var(--line);padding:8px 12px;margin-bottom:24px}
+
+/* forms */
+.form{max-width:560px;display:grid;gap:14px;margin-top:8px}
+.form label{display:grid;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist)}
+.form input{font:inherit;font-size:16px;padding:15px 16px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;border-radius:0;outline:none;transition:border-color .2s}
+.form input:focus{border-color:var(--mist)}
+.form .fine{font-size:13px;color:var(--mist);line-height:1.55}
+.msg{margin-top:18px;border-left:3px solid var(--signal);padding-left:14px;font-size:15px;line-height:1.6;max-width:560px}
+.msg.err{border-color:#E06A5A;color:#F3B3AA}
+
+/* view-as */
+.viewas{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:6px;background:rgba(10,29,38,.94);border:1px solid var(--line);padding:6px 6px 6px 14px;box-shadow:0 20px 60px rgba(0,0,0,.5);backdrop-filter:blur(10px)}
+.viewas span{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-right:6px;white-space:nowrap}
+.viewas button{all:unset;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:8px 11px;color:var(--mist);transition:all .2s;white-space:nowrap}
+.viewas button:hover{color:#fff}
+.viewas button.on{background:var(--signal);color:var(--ground)}
+@media(max-width:620px){.viewas span{display:none}.viewas{padding:4px}}
+.toast{position:fixed;left:50%;bottom:80px;transform:translate(-50%,20px);opacity:0;z-index:60;background:var(--paper);color:var(--ink);padding:12px 18px;font-size:14px;transition:all .4s var(--out);pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.nudge{position:fixed;left:50%;bottom:22px;z-index:45;transform:translate(-50%,140%);transition:transform .7s var(--out);display:flex;align-items:center;gap:18px;background:rgba(10,29,38,.95);border:1px solid var(--line);border-left:3px solid var(--signal);padding:14px 14px 14px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55);backdrop-filter:blur(10px);width:min(680px,calc(100% - 32px))}
+.nudge.show{transform:translate(-50%,0)}
+body.has-va .nudge{bottom:78px}
+.nudge p{font-size:14px;line-height:1.5;color:var(--ice);flex:1}
+.nudge p b{color:#fff;font-weight:600}
+.nudge .x{all:unset;cursor:pointer;color:var(--dim);font-size:18px;padding:4px 8px}
+.nudge .x:hover{color:#fff}
+@media(max-width:620px){.nudge{flex-wrap:wrap}.nudge p{flex-basis:100%}}
+.otherhubs{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.otherhubs b{color:var(--mist);font-weight:500}
+.otherhubs a{color:var(--dim);text-decoration:none;transition:color .2s}
+.otherhubs a:hover{color:var(--signal-2)}
+footer{padding:44px var(--gut) 90px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid rgba(45,91,107,.5);font-size:13px;color:var(--dim)}
+footer .wm{font-size:18px;color:var(--paper)}
+footer p{max-width:560px;line-height:1.6}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}[data-r]{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="nav">
+  <div class="nav-l"><a class="wm" href="#/">Sonder <b>&amp;</b> Metric</a><div class="crumb" id="crumb"></div></div>
+  <div class="nav-r" id="navr"></div>
+</header>
+<div id="app"></div>
+<footer>
+  <div><div class="wm">Sonder <b class="sig">&amp;</b> Metric</div><p style="margin-top:10px">Executive search for the energy, infrastructure and industrial ecosystem.</p></div>
+  <p class="otherhubs"><b>Other hubs</b><a href="../hr/">HR</a><a href="../finance/">Finance</a><a href="../asset-management/" style="color:var(--signal-2)">Asset Management</a><a href="../">All hubs →</a></p>
+  <p>Role and appointment data from the Sonder &amp; Metric Leadership Signals Index and Movers tracker. Member content is for members only; please do not forward. <a href="https://sonderandmetric.com/privacy-policy/">Privacy policy</a></p>
+</footer>
+<div class="toast" id="toast"></div>
+<div class="nudge" id="nudge" role="dialog" aria-label="Join the Asset Management hub"><p><b>Join the Asset Management hub.</b> Free for asset management leaders in infrastructure. Work email, instant access.</p><a class="btn o" href="#/join">Sign up for free</a><button class="x" aria-label="Dismiss" data-act="nudge-x">×</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* =========================================================
+   Asset Management in Infrastructure: members' hub (multi-page, hash routed)
+   Tiers: open (anyone) < member (free, work email) < inner (Josh approves). Admin sees all.
+   ========================================================= */
+const HUB = "asset_management";
+const RANK = {none:0, member:1, inner:2, admin:3};
+const TIER_LABEL = {open:"Open", none:"Open", member:"Members", inner:"Inner circle", admin:"Admin"};
+const LEVEL = {c_suite:"C-suite", director:"Director", head_of:"Head of"};
+
+const PAGES = [
+  {id:"resources", n:"01", t:"Resources", need:"member", live:true,
+   d:"Asset management news and moves from the past month, and every senior asset management seat open right now.",
+   lead:"A monthly read on the asset side of infrastructure: the deals and stories that change the asset management agenda, who moved into which seat, and which seats are open now."},
+  {id:"toolkit", n:"02", t:"Toolkit", need:"member",
+   d:"The scorecard, interview bank and first-90-days guide we use on senior asset management searches.",
+   lead:"The working documents behind our asset management searches, edited so you can use them on your own senior hires."},
+  {id:"perspectives", n:"03", t:"Perspectives", need:"open", partial:"member",
+   d:"Where we stand on hiring for the asset management seat, and conversations with asset management leaders.",
+   lead:"Short positions on hiring for the asset management seat, and podcast conversations with the asset management leaders building infrastructure businesses."},
+  {id:"community", n:"04", t:"Community", need:"member", partial:"inner",
+   d:"A quarterly question for the group, and a small roundtable for asset management leaders.",
+   lead:"One question a quarter, answered by the group. And a small roundtable, hosted by Josh, for asset management leaders at platforms and funds."},
+  {id:"pay", n:"05", t:"Pay", need:"inner",
+   d:"Base, bonus, LTIP and carry ranges for senior asset management roles in infrastructure.",
+   lead:"Pay ranges for senior asset management roles across infrastructure platforms and funds, drawn from our search data and public filings. Every number signed off by Josh."}
+];
+const TOOLS = [
+  {id:"scorecard", t:"Senior hiring scorecard", d:"The scorecard we use for Head of Asset Management, Portfolio Director and Asset Director searches.", items:["Capabilities scored against what the board needs from the seat","Weighting by business stage: build, scale or integrate","A one-page summary for the investment committee"]},
+  {id:"interviews", t:"Interview bank", d:"Interview questions grouped by what the board needs to test.", items:["Questions for each scorecard capability","What a strong and a weak answer sound like","Questions for references"]},
+  {id:"first-90", t:"First 90 days guide", d:"A guide for the new head of asset management and the people who hired them.", items:["What to agree with the CEO and fund before day one","The first 30, 60 and 90 days","How to report progress to the board"]}
+];
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+const fmtD = (d, o={day:"numeric",month:"short"}) => d ? new Date(String(d).length===10 ? d+"T12:00:00" : d).toLocaleDateString("en-GB", o) : "";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s);
+const app = $("#app");
+
+/* ---------- state ---------- */
+const ST = {sb:null, preview:false, session:null, tier:"none", viewAs:null, feed:null, me:null};
+const eff = () => ST.viewAs || ST.tier;               // tier used for gating on screen
+const can = need => need==="open" || RANK[eff()] >= RANK[need];
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2600); }
+
+/* ---------- icons ---------- */
+const LOCK = (c="#DB6F2A", s=22) => `<svg class="lock-anim" width="${s}" height="${s*1.15}" viewBox="0 0 26 30" fill="none" stroke="${c}" stroke-width="1.5"><rect x="2" y="13" width="22" height="15"/><path class="shackle" d="M7 13V8a6 6 0 0 1 12 0v5"/><circle cx="13" cy="20" r="1.6" fill="${c}"/></svg>`;
+const GLYPH = {
+  resources:`<svg width="220" height="160" viewBox="0 0 220 160" fill="none" stroke="#9FB7C0" stroke-width="1.2"><rect x="10" y="20" width="120" height="90"/><path d="M24 44h90M24 60h90M24 76h60"/><rect x="90" y="50" width="120" height="90" fill="#0A1D26"/><path d="M104 74h90M104 90h70M104 106h80"/></svg>`,
+  toolkit:`<svg width="200" height="160" viewBox="0 0 200 160" fill="none" stroke="#9FB7C0" stroke-width="1.2"><rect x="20" y="20" width="140" height="120"/><path d="M40 50h60M40 75h60M40 100h60"/><path d="M110 50h30M110 75h20M110 100h26" stroke="#DB6F2A"/></svg>`,
+  perspectives:`<svg width="200" height="160" viewBox="0 0 200 160" fill="none" stroke="#9FB7C0" stroke-width="1.2"><circle cx="80" cy="80" r="56"/><circle cx="80" cy="80" r="30"/><path d="M80 24v112M24 80h112"/></svg>`,
+  community:`<svg width="200" height="160" viewBox="0 0 200 160" fill="none" stroke="#9FB7C0" stroke-width="1.2"><circle cx="100" cy="80" r="50"/><circle cx="100" cy="30" r="9"/><circle cx="150" cy="80" r="9"/><circle cx="100" cy="130" r="9"/><circle cx="50" cy="80" r="9"/><circle cx="135" cy="45" r="9"/><circle cx="65" cy="115" r="9"/></svg>`,
+  pay:`<svg width="200" height="160" viewBox="0 0 200 160" fill="none" stroke="#9FB7C0" stroke-width="1.2"><path d="M20 130h170"/><rect x="40" y="70" width="20" height="60"/><rect x="80" y="40" width="20" height="90"/><rect x="120" y="90" width="20" height="40"/><path d="M30 60l40-20 40 30 50-40" stroke="#DB6F2A"/></svg>`
+};
+const ICON3 = [
+  `<svg viewBox="0 0 56 56" fill="none" stroke="#DB6F2A" stroke-width="1.4"><circle cx="28" cy="28" r="20"/><circle cx="28" cy="28" r="8"/><path d="M28 2v10M28 44v10M2 28h10M44 28h10"/></svg>`,
+  `<svg viewBox="0 0 56 56" fill="none" stroke="#DB6F2A" stroke-width="1.4"><rect x="10" y="6" width="36" height="44"/><path d="M18 18h20M18 28h20M18 38h12"/></svg>`,
+  `<svg viewBox="0 0 56 56" fill="none" stroke="#DB6F2A" stroke-width="1.4"><circle cx="18" cy="22" r="7"/><circle cx="38" cy="22" r="7"/><path d="M6 46c2-8 7-12 12-12s10 4 12 12M26 46c2-8 7-12 12-12s10 4 12 12"/></svg>`
+];
+
+/* ---------- gating UI ---------- */
+function badge(need){ const k = need==="none"?"open":need; return `<span class="tb ${k}">${TIER_LABEL[k]}</span>`; }
+function lockCopy(need){
+  const t = eff(), req = ST.me && ST.me.inner_requested_at;
+  if (need==="member") return {h:"Free for members", p:"Membership is free for asset management leaders in infrastructure. Join with your work email and you are in straight away.",
+    a:`<a class="btn o" href="#/join">Sign up for free</a><a class="btn" href="#/signin">Log in</a>`};
+  if (t==="none") return {h:"Inner circle only", p:"The inner circle is a small group of senior asset management leaders. Join as a member first, then request access. Josh approves each person.",
+    a:`<a class="btn o" href="#/join">Join as a member</a><a class="btn" href="#/signin">Log in</a>`};
+  return {h:"Inner circle only", p:"The inner circle is a small group of senior asset management leaders. Josh reviews each request personally.",
+    a: req ? "" : `<button class="btn o" data-act="request">Request access</button>`, pend: req ? `Request received ${esc(fmtD(req,{day:"numeric",month:"long"}))}. Josh will be in touch.` : ""};
+}
+function gate(need, inner, skeleton){
+  if (can(need)) return inner;
+  const c = lockCopy(need);
+  return `<div class="gated"><div class="veil" aria-hidden="true">${skeleton || skel()}</div>
+    <div class="lockcard"><div><div class="lk">${LOCK()}${badge(need)}</div><h3>${c.h}</h3><p>${c.p}</p>${c.a?`<div class="acts">${c.a}</div>`:""}${c.pend?`<div class="pend">${c.pend}</div>`:""}</div></div></div>`;
+}
+function skel(n=4){ return `<div class="skel">${Array.from({length:n},(_,i)=>`<div class="blk"><i style="--w:${60+((i*37)%35)}%"></i><i style="--w:${40+((i*23)%40)}%"></i><i style="--w:${25+((i*17)%30)}%"></i></div>`).join("")}</div>`; }
+
+/* ---------- chrome ---------- */
+function crumb(parts){
+  $("#crumb").innerHTML = `<i></i><a href="../">Hubs</a> / <a href="#/">Asset Management hub</a>` + parts.map((p,i)=> i===parts.length-1 ? ` / <span class="cur">${esc(p.t)}</span>` : ` / <a href="${p.h}">${esc(p.t)}</a>`).join("");
+}
+function navR(){
+  const t = ST.tier;
+  let h = "";
+  if (ST.session || ST.preview){
+    h += `<span class="hide-sm">${badge(eff()==="none"?"open":eff())}</span>`;
+    if (t==="none") h += `<a class="nbtn o" href="#/join">Join</a>`;
+    h += `<button class="nbtn" data-act="signout">Log out</button>`;
+  } else {
+    h = `<a class="nbtn" href="#/signin">Log in</a><a class="nbtn o hide-sm" href="#/join">Sign up free</a>`;
+  }
+  $("#navr").innerHTML = h;
+}
+function viewAsBar(){
+  document.querySelector(".viewas")?.remove();
+  document.body.classList.toggle("has-va", ST.tier==="admin");
+  if (ST.tier!=="admin") return;
+  const b = document.createElement("div"); b.className="viewas";
+  b.innerHTML = `<span>View as</span>` + [["none","Open"],["member","Member"],["inner","Inner circle"],["admin","Admin"]].map(([k,l])=>`<button data-va="${k}" class="${(ST.viewAs||"admin")===k?"on":""}">${l}</button>`).join("");
+  document.body.appendChild(b);
+}
+
+/* ---------- home ---------- */
+function home(){
+  crumb([]);
+  const t = eff(), st = (ST.feed && ST.feed.stats) || null;
+  const pct = {none:"8%", member:"50%", inner:"92%", admin:"100%"}[t];
+  const rungs = [
+    {k:"none", h:"Open", how:"Anyone", ic:`<svg viewBox="0 0 34 34" fill="none" stroke="#8FD0B8" stroke-width="1.4"><circle cx="17" cy="17" r="13"/><path d="M4 17h26M17 4c5 5 5 21 0 26M17 4c-5 5-5 21 0 26"/></svg>`, li:["This page: what the hub is and who it is for","Teasers of each section","Where we stand, in headline form"]},
+    {k:"member", h:"Members", how:"Free · work email · instant", ic:`<svg viewBox="0 0 34 34" fill="none" stroke="#D9E7EB" stroke-width="1.4"><circle cx="17" cy="12" r="6"/><path d="M5 31c2-8 7-11 12-11s10 3 12 11"/></svg>`, li:["Resources: asset management news, moves and open seats","Toolkit: scorecard, interview bank, 90-day guide","Perspectives in full, and the quarterly question"]},
+    {k:"inner", h:"Inner circle", how:"By request · Josh approves", ic:`<svg viewBox="0 0 34 34" fill="none" stroke="#DB6F2A" stroke-width="1.4"><circle cx="17" cy="17" r="13"/><circle cx="17" cy="17" r="6"/><circle cx="17" cy="17" r="1.5" fill="#DB6F2A"/></svg>`, li:["Pay: comp ranges for senior asset management roles","The quarterly asset management roundtable","Everything members get"]}
+  ];
+  const reached = k => RANK[t] >= RANK[k];
+  const here = k => (t==="admin" ? "inner" : t)===k;
+  let cta;
+  if (t==="none") cta = `<div><h3>Join free with your work email.</h3><p>Instant access to Resources, Toolkit and Perspectives.</p></div><a class="btn o" href="#/join">Sign up for free</a>`;
+  else if (t==="member") cta = ST.me && ST.me.inner_requested_at
+      ? `<div><h3>Inner circle request received.</h3><p>Josh reviews each request personally.</p></div>`
+      : `<div><h3>You're a member.</h3><p>Ask to join the inner circle for Pay and the roundtable.</p></div><button class="btn o" data-act="request">Request inner circle</button>`;
+  else cta = `<div><h3>You have full access.</h3><p>Every section of the hub is open to you.</p></div><a class="btn o" href="#/resources">Go to Resources</a>`;
+
+  app.innerHTML = `
+  <section class="hero">
+    <canvas id="net" aria-hidden="true"></canvas>
+    ${t==="none" ? `<div class="hero-grid"><div>` : ""}
+    <div class="hero-in">
+      <div class="eyebrow" data-r style="--d:.1">Sonder &amp; Metric · Members' hub · UK &amp; Ireland</div>
+      <h1 data-r style="--d:.25;font-size:clamp(34px,4.4vw,64px)">Welcome to the <span class="sig">Asset Management Hub</span>.<span class="h1-sub">For asset management leaders in infrastructure.</span></h1>
+      <p class="lead" data-r style="--d:.4">A members' hub for Heads of Asset Management, Portfolio Directors and Asset Directors running energy and infrastructure portfolios, and the funds behind them. Market intelligence, working tools and a room of peers, from the search firm that hires into the seat.</p>
+    </div>
+    ${t==="none" ? `<div class="hero-cta" data-r style="--d:.55;margin-top:40px"><a class="btn" href="#inside">See what's inside</a><a class="btn" href="#access">How access works</a></div></div>${accessCard()}</div>`
+      : st ? `<div class="stats">
+        <div class="stat hi" data-r style="--d:.5"><div class="v" data-count="${st.open_seats||0}">0</div><div class="l">Senior asset management seats open now</div></div>
+        <div class="stat" data-r style="--d:.6"><div class="v" data-count="${st.movers_month||0}">0</div><div class="l">Asset management moves this month</div></div>
+        <div class="stat" data-r style="--d:.7"><div class="v" data-count="${st.stories_month||0}">0</div><div class="l">Stories for the asset management agenda</div></div>
+        <div class="stat" data-r style="--d:.8"><div class="v" data-count="${st.employers_tracked||0}">0</div><div class="l">Employers we track weekly</div></div></div>` : ""}
+  </section>
+
+  <section class="sec" id="inside">
+    <div class="sh"><div class="n" data-r>Inside /</div><div><h2 data-r style="--d:.08">What's inside the hub.</h2><p data-r style="--d:.16">One place for asset management leaders in infrastructure to see their market clearly, borrow the tools we use on searches, and compare notes with peers who do the same job. Five sections: open the ones marked for your access level, and the rest show you what's inside and how to unlock them.</p></div></div>
+    <div class="tiles">${PAGES.map((p,i)=>{ const open = can(p.need); return `<a class="tile ${open?"":"locked"}" href="#/${p.id}" data-r style="--d:${i*.07}">
+      <div class="top"><span class="n">${p.n}</span>${p.live?`<span class="tb open" style="color:var(--signal-2);border-color:rgba(219,111,42,.5)">Live</span>`:`<span class="tb soon">In production</span>`}</div>
+      ${!open?`<span class="lockic">${LOCK("#9FB7C0",20)}</span>`:""}
+      <div class="glyph">${GLYPH[p.id]}</div>
+      <h3>${esc(p.t)}</h3><p>${esc(p.d)}</p>
+      <div class="foot">${badge(p.need)}<span class="arrow">→</span></div></a>`; }).join("")}</div>
+  </section>
+
+  <section class="sec light" id="about">
+    <div class="sh"><div class="n" data-r>About /</div><div><h2 data-r style="--d:.08">Who we are, and why we care.</h2></div></div>
+    <div class="about">
+      <div data-r>
+        <blockquote>The quality of the leadership team decides how much value an infrastructure asset creates. Asset managers turn the investment case into performance every day.</blockquote>
+        <p>The investment case is written once. Asset managers deliver it every day: availability, contracts, budgets and the teams on site. We built this hub for the people who carry that.</p>
+      </div>
+      <div data-r style="--d:.15">
+        <div class="founder">
+          <div class="ph-wrap"><img src="../assets/josh.jpg" alt="Josh Foulkes" width="620" height="620" loading="lazy"></div>
+          <div><b>Josh Foulkes</b><span>Founder, Sonder &amp; Metric</span><span>Host of Solving Infrastructure</span></div>
+        </div>
+        <p>Sonder &amp; Metric is a specialist executive search firm for the energy, infrastructure and industrial ecosystem. We work with infrastructure investors, the platforms they own and the leadership teams that run them. We are a small team by design: a few critical searches at a time, each market mapped in depth, and hiring decisions made on evidence.</p>
+        <div class="facts">
+          <div><b>Based</b><span>UK, working across Europe</span></div>
+          <div><b>The Brief</b><span>Weekly senior hiring read, every Monday · <a href="../brief/">Subscribe</a></span></div>
+        </div>
+        <a class="btn" style="margin-top:28px" href="https://sonderandmetric.com" target="_blank" rel="noopener">sonderandmetric.com ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec deep" id="access">
+    <div class="sh"><div class="n" data-r>Access /</div><div><h2 data-r style="--d:.08">How access works.</h2><p data-r style="--d:.16">Three levels. Most of the hub is free for asset management leaders with a work email. A smaller inner circle, approved by Josh, gets pay data and the roundtable.</p></div></div>
+    <div class="ladder" data-r style="--to:${pct}">${rungs.map((r,i)=>`<div class="rung ${reached(r.k)?"reached":""} ${here(r.k)?"here":""}"><div class="dot">${r.ic}</div><h3>${r.h}</h3><div class="how">${r.how}</div><ul>${r.li.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
+    <div class="cta-band" data-r>${cta}</div>
+  </section>`;
+  net(); tileGlow();
+}
+
+function accessCard(){
+  return `<div class="access" data-r style="--d:.45">
+    <span class="eyebrow">Members</span><h3>Log in</h3><p class="sub">Enter your email and we'll send you a login link. No password.</p>
+    <form id="loginf"><input type="email" name="e" required autocomplete="email" placeholder="Your work email" aria-label="Work email"><button class="btn o">Log in</button></form>
+    <div id="amsg"></div>
+    <div class="or">New to the hub?</div>
+    <a class="btn free" href="#/join" id="freebtn">Sign up for free</a>
+    <p class="note">Free for asset management leaders · work email · instant access</p></div>`;
+}
+async function doLogin(em, msgEl, btn){
+  em = String(em||"").trim().toLowerCase();
+  if (ST.preview){ toast("Preview only: login is switched off here."); return; }
+  btn && (btn.disabled = true);
+  const {error} = await ST.sb.auth.signInWithOtp({email:em, options:{emailRedirectTo: location.origin+location.pathname, shouldCreateUser:false}});
+  btn && (btn.disabled = false);
+  if (error){
+    ST.prefill = em;
+    msgEl.innerHTML = /signup|not allowed|not found/i.test(error.message||"")
+      ? `<div class="amsg err">We don't have a member account for ${esc(em)} yet. <a href="#/join">Sign up for free</a>.</div>`
+      : `<div class="amsg err">That did not work. Please try again in a minute.</div>`;
+    return;
+  }
+  msgEl.innerHTML = `<div class="amsg">Check your inbox at <b>${esc(em)}</b> for your login link.</div>`;
+}
+document.addEventListener("submit", e => {
+  if (e.target.id !== "loginf") return;
+  e.preventDefault(); doLogin(new FormData(e.target).get("e"), $("#amsg"), e.target.querySelector("button"));
+});
+document.addEventListener("input", e => { if (e.target.closest("#loginf")) ST.prefill = e.target.value.trim(); });
+
+/* ---------- section page shell ---------- */
+function pageShell(p, body){
+  const i = PAGES.indexOf(p), prev = PAGES[i-1], next = PAGES[i+1];
+  return `<section class="ph"><a class="back" href="#/">← Asset Management hub</a>
+    <div class="row1"><span class="n">${p.n} /</span>${badge(p.need)}${p.partial?`<span class="eyebrow" style="font-size:10.5px">Some parts: ${TIER_LABEL[p.partial]}</span>`:""}</div>
+    <h1>${esc(p.t)}</h1><p class="lead">${esc(p.lead)}</p><div class="bignum" aria-hidden="true">${p.n}</div></section>
+    <div class="pbody">${body}</div>
+    <nav class="pnav">${prev?`<a href="#/${prev.id}"><small>← Previous</small>${esc(prev.t)}</a>`:`<a href="#/"><small>← Back</small>Asset Management hub</a>`}${next?`<a href="#/${next.id}" style="text-align:right"><small>Next →</small>${esc(next.t)}</a>`:`<a href="#/" style="text-align:right"><small>Back →</small>Asset Management hub</a>`}</nav>`;
+}
+
+/* ---------- resources ---------- */
+function resources(tab){
+  const p = PAGES[0]; crumb([{t:p.t}]);
+  tab = tab || "news";
+  const f = ST.feed || {}, m = f.month||[], mv = f.movers||[], seats = f.seats||[];
+  const tabs = [["news","News this month",m.length],["moves","Moves this month",mv.length],["seats","Open seats",seats.length]];
+  const member = can("member");
+  const body = `
+    <div class="tabs" role="tablist">${tabs.map(([k,l,c])=>`<a class="tab ${k===tab?"on":""}" href="#/resources/${k}" role="tab">${l}${member?`<b>${c}</b>`:""}</a>`).join("")}</div>
+    <div class="panel">${gate("member", member ? resPanel(tab) : "", tab==="news" ? `<div class="stories">${[1,2,3].map(()=>`<div class="story" style="min-height:280px">${skel(2)}</div>`).join("")}</div>` : skel(5))}</div>`;
+  app.innerHTML = pageShell(p, body);
+  if (member && tab==="seats") wireChips(seats);
+}
+function resPanel(tab){
+  const f = ST.feed || {};
+  const since = new Date(Date.now()-31*864e5).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  if (tab==="news"){
+    const m = f.month||[];
+    return `<div class="summary"><span><b>${m.length}</b>stories</span><span>Since ${since}</span></div>
+      <div class="intro">Josh's short introduction to the month goes here: what moved for asset management leaders in infrastructure, and what to watch next.</div>
+      <div class="stories">${m.length ? m.map((n,i)=>`<a class="story" style="--i:${i}" href="${esc(n.url)}" target="_blank" rel="noopener">
+        <div class="k"><span>${esc(n.source||"")}</span><span>${esc(fmtD(n.published_date))}</span></div><h3>${esc(n.headline)}</h3>
+        ${n.summary?`<p>${esc(n.summary)}</p>`:""}${n.seat_implication?`<div class="imp"><small>What this means for the seat</small><p>${esc(n.seat_implication)}</p></div>`:""}</a>`).join("")
+        : `<div class="empty">No approved stories for the Asset Management hub in the past month.</div>`}</div>`;
+  }
+  if (tab==="moves"){
+    const mv = f.movers||[];
+    if (!mv.length) return `<div class="mv-empty"><div><h3>The first asset management moves land on <span class="sig">Thursday</span>.</h3><p>Each weekday the Movers scan reads trade press and the newsrooms of every employer we track. On Thursdays the best asset management appointments are checked by Josh and published here, each with the seat it leaves open behind it.</p></div><div>${flowSVG()}</div></div>`;
+    return `<div class="summary"><span><b>${mv.length}</b>moves</span><span>Since ${since}</span></div><div class="mv-line">${mv.map((a,i)=>`<div class="mv" style="--i:${i}">
+      <div class="d">${esc(fmtD(a.announced_date,{day:"numeric",month:"short",year:"numeric"}))}${a.move_type?" · "+esc(a.move_type.replace("_"," ")):""}</div>
+      <h3>${esc(a.person_name)} → ${esc(a.role_title)}, ${esc(a.to_company)}</h3>
+      ${a.from_company?`<p>Previously ${esc(a.from_role||"")}${a.from_role?", ":""}${esc(a.from_company)}.</p>`:""}
+      ${a.seat_left_open?`<div class="seat">Seat left open: ${esc(a.seat_left_open)}</div>`:""}
+      ${a.source_url?`<p style="margin-top:8px;font-size:13px"><a href="${esc(a.source_url)}" target="_blank" rel="noopener" style="color:var(--mist)">${esc(a.source_name||"Source")} ↗</a></p>`:""}</div>`).join("")}</div>`;
+  }
+  const seats = f.seats||[], sig = f.signals||[];
+  const bySec = {}; seats.forEach(r => { const k=r.sector||"Other"; bySec[k]=(bySec[k]||0)+1; });
+  const secs = Object.entries(bySec).sort((a,b)=>b[1]-a[1]), mx = Math.max(1,...secs.map(s=>s[1]));
+  const levels = [...new Set(seats.map(r=>r.level))];
+  return `<div class="seats-wrap"><div>
+      <div class="chips"><button class="chip on" data-f="all">All · ${seats.length}</button>${["c_suite","director","head_of"].filter(l=>levels.includes(l)).map(l=>`<button class="chip" data-f="${l}">${LEVEL[l]}</button>`).join("")}<button class="chip" data-f="wl">Watchlist only</button></div>
+      <div class="rows" id="rows">${seats.length?"":`<div class="empty">No senior asset management roles open in the UK and Ireland this week. The Index reads every tracked employer on Tuesdays and Fridays.</div>`}</div></div>
+    <aside class="side"><h4>Where the seats are</h4><div class="bars">${secs.map(([k,v],i)=>`<div class="bar" style="--i:${i}"><span>${esc(k)}</span><b>${v}</b><div class="tr"><i style="--w:${v/mx*100}%"></i></div></div>`).join("")}</div>
+      <h4>Signals</h4>${sig.length?sig.map(g=>`<div class="sigcard"><h5>${esc(g.title)}</h5><p>${inl(g.body)}</p></div>`).join(""):`<div class="empty">Signals appear here once approved.</div>`}</aside></div>`;
+}
+function rowsHTML(list){
+  const mx = Math.max(60, ...list.map(r=>r.days_open||0));
+  return list.map((r,i) => `<a class="rowi" style="--i:${i}" href="${esc(r.url)}" target="_blank" rel="noopener">
+    <div><div class="t">${esc(r.role_title)}</div><div class="e">${esc(r.employer)}${r.on_watchlist?'<span class="wl">Watchlist</span>':""}</div></div>
+    <div class="meta">${esc(r.sector||"")}<small>${esc(r.location||r.country||"")}</small></div>
+    <div class="age">${esc(LEVEL[r.level]||"")} · ${r.days_open!=null?`${r.days_open}d open`:"new"}<div class="tr"><i style="--w:${Math.max(.04,(r.days_open||0)/mx)}"></i></div></div>
+    <div class="go" aria-hidden="true">↗</div></a>`).join("");
+}
+function wireChips(seats){
+  const rows = $("#rows"); if (!rows || !seats.length) return;
+  rows.innerHTML = rowsHTML(seats);
+  document.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===b));
+    const f = b.dataset.f, l = seats.filter(r => f==="all" ? true : f==="wl" ? r.on_watchlist : r.level===f);
+    rows.innerHTML = rowsHTML(l) || `<div class="empty">Nothing matches that filter.</div>`;
+  });
+}
+function flowSVG(){
+  return `<svg class="flow" viewBox="0 0 560 260" aria-hidden="true">
+    <path class="path" d="M70 130 C 200 30, 360 30, 490 130" fill="none" stroke="#DB6F2A" stroke-width="1.5"/>
+    <path d="M70 130 C 200 230, 360 230, 490 130" fill="none" stroke="#2D5B6B" stroke-width="1" stroke-dasharray="3 6"/>
+    <rect x="20" y="96" width="100" height="68" fill="#0A1D26" stroke="#9FB7C0"/><text x="70" y="126" text-anchor="middle" fill="#D9E7EB" font-family="Poppins" font-size="12">Company A</text><text x="70" y="146" text-anchor="middle" fill="#9FB7C0" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">ASSET MANAGER</text>
+    <rect x="440" y="96" width="100" height="68" fill="#0A1D26" stroke="#DB6F2A"/><text x="490" y="126" text-anchor="middle" fill="#F6F8F9" font-family="Poppins" font-size="12">Company B</text><text x="490" y="146" text-anchor="middle" fill="#F29A5B" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">NEW HEAD OF AM</text>
+    <circle r="6" fill="#DB6F2A"><animateMotion dur="4s" repeatCount="indefinite" path="M70 130 C 200 30, 360 30, 490 130"/></circle>
+    <g class="seatbox"><rect x="20" y="196" width="100" height="40" fill="none" stroke="#DB6F2A" stroke-dasharray="4 4"/><text x="70" y="221" text-anchor="middle" fill="#F29A5B" font-family="IBM Plex Mono" font-size="9" letter-spacing="1">SEAT LEFT OPEN</text></g>
+    <line x1="70" y1="164" x2="70" y2="196" stroke="#2D5B6B"/></svg>`;
+}
+
+/* ---------- toolkit ---------- */
+function toolkit(sub){
+  const p = PAGES[1];
+  if (sub){ const t = TOOLS.find(x=>x.id===sub); if (t) return toolDetail(p,t); }
+  crumb([{t:p.t}]);
+  app.innerHTML = pageShell(p, `<div class="soon-note">In production · first tool due with the hub launch</div>
+    <div class="cards">${TOOLS.map((t,i)=>`<a class="card" style="--i:${i}" href="#/toolkit/${t.id}">
+      <div class="top"><span class="k">0${i+1}</span>${can("member")?badge("member"):LOCK("#9FB7C0",18)}</div>
+      <h3>${esc(t.t)}</h3><p>${esc(t.d)}</p><span class="more">Open →</span></a>`).join("")}</div>`);
+}
+function toolDetail(p, t){
+  crumb([{t:p.t,h:"#/toolkit"},{t:t.t}]);
+  const rows = [["Portfolio performance and availability",82],["Commercial and contract management",72],["Working with the fund and the board",68],["Leading site and operations teams",64],["Acquisitions and integration",58]];
+  const mock = `<div class="mock"><span class="stamp-sample">Sample layout</span><div class="bar-top"><span>${esc(t.t)}</span><b>Draft</b></div>
+    <div class="sc">${rows.map(([k,v],i)=>`<div class="sc-row" style="--i:${i}"><div>${k}</div><div class="tr"><i style="--w:${v}%"></i></div><span>${(v/20).toFixed(1)}</span></div>`).join("")}</div></div>`;
+  app.innerHTML = `<section class="ph"><a class="back" href="#/toolkit">← Toolkit</a><div class="row1"><span class="n">02 /</span>${badge("member")}<span class="tb soon">In production</span></div>
+    <h1 style="font-size:clamp(38px,5.6vw,80px)">${esc(t.t)}</h1><p class="lead">${esc(t.d)}</p></section>
+    <div class="pbody"><div class="split">
+      <div class="copy"><p>What's inside:</p><ul>${t.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+        ${can("member") ? `<button class="btn" disabled>Download · coming soon</button>` : `<a class="btn o" href="#/join">Join free to download</a>`}</div>
+      ${gate("member", mock, mock)}
+    </div></div>
+    <nav class="pnav"><a href="#/toolkit"><small>← Back</small>Toolkit</a><a href="#/" style="text-align:right"><small>Home →</small>Asset Management hub</a></nav>`;
+}
+
+/* ---------- perspectives ---------- */
+function perspectives(){
+  const p = PAGES[2]; crumb([{t:p.t}]);
+  const pos = [1,2,3,4,5].map(i=>`<div class="card ph-card" style="--i:${i}"><div class="top"><span class="k">Position 0${i}</span></div><h3>Headline position to be agreed with Josh</h3><p>Open to all as a headline. Members read the full argument.</p>
+    ${can("member")?`<span class="more" style="color:var(--dim)">Full piece · coming soon</span>`:`<a class="more" href="#/join">${LOCK("#F29A5B",12)} Members read in full</a>`}</div>`).join("");
+  const voices = [1,2,3].map(i=>`<div class="card ph-card" style="--i:${i}"><div class="eyebrow">Solving Infrastructure · episode slot</div>
+    <div class="wave">${Array.from({length:34},(_,k)=>`<i style="--i:${k};--h:${18+Math.abs(Math.sin(k*1.7+i))*80}%"></i>`).join("")}</div>
+    <h3>Asset management leader episode to be tagged</h3><p>Episodes and guest pieces from asset management leaders appear here once tagged for the Asset Management hub.</p></div>`).join("");
+  app.innerHTML = pageShell(p, `<div class="soon-note">In production</div>
+    <h2 style="font-size:28px;margin:10px 0 24px">Where I stand ${badge("open")}</h2><div class="cards">${pos}</div>
+    <h2 style="font-size:28px;margin:72px 0 24px">Voices ${badge("member")}</h2>${gate("member", `<div class="cards">${voices}</div>`, `<div class="cards">${voices}</div>`)}`);
+}
+
+/* ---------- community ---------- */
+function community(){
+  const p = PAGES[3]; crumb([{t:p.t}]);
+  const poll = `<div class="card" style="min-height:0"><div class="eyebrow">Quarterly question · to be set</div><h3 style="color:var(--dim);margin-top:6px">This quarter's question goes here.</h3>
+    <div class="poll">${[["Option A",62],["Option B",38],["Option C",24],["Option D",12]].map(([k,w],i)=>`<div style="--i:${i}"><i style="--w:${w}%"></i><span>${k}</span></div>`).join("")}</div>
+    <button class="btn" disabled>Vote · opens with the first question</button></div>`;
+  const round = `<div class="card" style="min-height:0"><div class="eyebrow">Roundtable · date to be set</div><h3 style="color:var(--dim);margin-top:6px">First asset management roundtable</h3>
+    <p>A small quarterly dinner or virtual roundtable for asset management leaders at infrastructure platforms and funds, hosted by Josh.</p><button class="btn" disabled>Register interest · coming soon</button></div>`;
+  app.innerHTML = pageShell(p, `<div class="soon-note">In production</div><div class="split" style="align-items:stretch">
+    <div><h2 style="font-size:26px;margin-bottom:20px">Quarterly question ${badge("member")}</h2>${gate("member", poll, poll)}</div>
+    <div><h2 style="font-size:26px;margin-bottom:20px">Roundtable ${badge("inner")}</h2>${gate("inner", round, round)}</div></div>`);
+}
+
+/* ---------- pay ---------- */
+function pay(){
+  const p = PAGES[4]; crumb([{t:p.t}]);
+  const r = [["Head of Asset Management",30,52],["Portfolio Director",24,42],["Asset Director",16,32],["Senior Asset Manager",10,24]];
+  const mock = `<div class="mock"><span class="stamp-sample">Sample layout</span><div class="bar-top"><span>Pay ranges · senior asset management</span><b>Annual</b></div>
+    <div class="comp-rows">${r.map(([k,a,w])=>`<div class="comp-row"><span>${k}</span><div class="rg"><i style="--a:${a}%;--w:${w}%"></i></div></div>`).join("")}</div></div>`;
+  app.innerHTML = pageShell(p, `<div class="soon-note">First edition · date to be set</div><div class="split">
+    <div class="copy"><p>What's inside:</p><ul><li>Base, bonus, LTIP and carry ranges by role</li><li>Split by platform stage and ownership</li><li>Updated once a year, every number signed off by Josh</li></ul></div>
+    ${gate("inner", mock, mock)}</div>`);
+}
+
+/* ---------- join / sign in ---------- */
+function joinPage(){
+  crumb([{t:"Join"}]);
+  const signedIn = !!ST.session;
+  if (signedIn && RANK[ST.tier] >= 1){ location.hash = "#/"; return; }
+  app.innerHTML = `<section class="ph"><a class="back" href="#/">← Asset Management hub</a><div class="row1">${badge("member")}<span class="eyebrow">Free · instant</span></div>
+    <h1 style="font-size:clamp(40px,6vw,88px)">Join the Asset Management hub.</h1><p class="lead">Free for asset management leaders at infrastructure platforms and funds. Use your work email; personal addresses are not accepted.</p></section>
+    <div class="pbody"><form class="form" id="joinf">
+      <label>Full name<input name="n" required autocomplete="name"></label>
+      <label>Job title<input name="t" required autocomplete="organization-title"></label>
+      <label>Company<input name="c" required autocomplete="organization"></label>
+      ${signedIn ? `<p class="fine">Joining as ${esc(ST.session.user.email)}.</p>` : `<label>Work email<input name="e" type="email" required autocomplete="email" value="${esc(ST.prefill||"")}"></label>`}
+      <div><button class="btn o">${signedIn ? "Join now" : "Send my sign-in link"}</button></div>
+      <p class="fine">${signedIn ? "" : "We'll email you a link. Click it and you're in. No password."} By joining you agree to receive occasional hub emails. Unsubscribe any time.</p>
+    </form><div id="jmsg"></div></div>`;
+  $("#joinf").onsubmit = async e => {
+    e.preventDefault(); const fd = new FormData(e.target), b = e.target.querySelector("button");
+    const meta = {full_name:fd.get("n").trim(), job_title:fd.get("t").trim(), company:fd.get("c").trim(), join_hub:HUB};
+    if (ST.preview){ toast("Preview only: sign-up is switched off here."); return; }
+    b.disabled = true;
+    if (signedIn){ return doJoin(meta); }
+    const em = String(fd.get("e")).trim().toLowerCase();
+    if (/@(gmail|googlemail|hotmail|outlook|live|msn|yahoo|icloud|me|mac|aol|proton|protonmail|gmx|btinternet|sky)\./.test(em)){ b.disabled=false; $("#jmsg").innerHTML=`<div class="msg err">Please use your work email.</div>`; return; }
+    try { localStorage.setItem("smhub_join", JSON.stringify(meta)); } catch(_){}
+    const {error} = await ST.sb.auth.signInWithOtp({email:em, options:{emailRedirectTo: location.origin+location.pathname, shouldCreateUser:true, data:meta}});
+    if (error){ b.disabled=false; $("#jmsg").innerHTML=`<div class="msg err">That did not work. Please try again in a minute.</div>`; return; }
+    e.target.remove(); $("#jmsg").innerHTML = `<div class="msg">Check your inbox at <b>${esc(em)}</b> for a link from Sonder &amp; Metric. Click it and you're in.</div>`;
+  };
+}
+async function doJoin(meta){
+  const {data, error} = await ST.sb.rpc("hub_join", {p_hub:HUB, p_name:meta.full_name||null, p_title:meta.job_title||null, p_company:meta.company||null});
+  try { localStorage.removeItem("smhub_join"); } catch(_){}
+  if (error || !data || !data.ok){
+    const why = data && data.reason==="work_email_required" ? "This hub is for work email addresses. Please sign out and join with your work email." : "We could not add you just now. Please try again, or email info@sonderandmetric.com.";
+    toast(why); location.hash = "#/join"; return false;
+  }
+  await loadFeed(); toast("Welcome to the Asset Management hub."); location.hash = "#/"; route(); return true;
+}
+function signinPage(){
+  crumb([{t:"Log in"}]);
+  app.innerHTML = `<section class="ph"><a class="back" href="#/">← Asset Management hub</a><h1 style="font-size:clamp(40px,6vw,80px)">Log in.</h1><p class="lead">Members get a login link by email. No password.</p></section>
+    <div class="pbody"><form class="form" id="sif"><label>Work email<input name="e" type="email" required autocomplete="email" value="${esc(ST.prefill||"")}"></label><div><button class="btn o">Log in</button></div><p class="fine">New to the hub? <a href="#/join">Sign up for free</a>.</p></form><div id="smsg"></div></div>`;
+  $("#sif").onsubmit = e => { e.preventDefault(); doLogin(new FormData(e.target).get("e"), $("#smsg"), e.target.querySelector("button")); };
+}
+
+/* ---------- router ---------- */
+let lastDepth = 0;
+function parse(){ const h = location.hash.replace(/^#\/?/,""); if (/access_token|error_description/.test(h)) return []; return h.split("/").filter(Boolean); }
+function route(){
+  const [a,b] = parse();
+  if (a && document.getElementById(a) && !["resources","toolkit","perspectives","community","pay","join","signin"].includes(a)) return; // in-page anchor
+  const depth = a ? (b ? 2 : 1) : 0;
+  const dir = depth >= lastDepth ? "leave-in" : "leave-out"; lastDepth = depth;
+  app.classList.remove("enter"); app.classList.add(dir);
+  setTimeout(() => {
+    ({resources:()=>resources(b), toolkit:()=>toolkit(b), perspectives, community, pay, join:joinPage, signin:signinPage}[a] || home)();
+    navR(); viewAsBar();
+    window.scrollTo(0, 0);
+    app.classList.remove("leave-in","leave-out"); void app.offsetWidth; app.classList.add("enter");
+    observe(); setTimeout(nudge, 1200);
+  }, reduce ? 0 : 300);
+}
+addEventListener("hashchange", route);
+document.addEventListener("click", async e => {
+  const a = e.target.closest("[data-act],[data-va],a[href^='#']");
+  if (!a) return;
+  if (a.matches("a[href^='#']") && !a.getAttribute("href").startsWith("#/")){ e.preventDefault(); document.querySelector(a.getAttribute("href"))?.scrollIntoView({behavior:"smooth"}); return; }
+  if (a.dataset.va){ ST.viewAs = a.dataset.va==="admin" ? null : a.dataset.va; route(); return; }
+  const act = a.dataset.act;
+  if (act==="signout"){ if (ST.preview){ toast("Preview only."); return; } await ST.sb.auth.signOut(); location.hash="#/"; location.reload(); }
+  if (act==="request"){
+    if (ST.preview || ST.viewAs){ toast("Preview: this would send an inner circle request to Josh."); return; }
+    const {data} = await ST.sb.rpc("hub_request_inner", {p_hub:HUB});
+    if (data && data.ok){ ST.me = Object.assign({}, ST.me, {inner_requested_at:new Date().toISOString()}); toast("Request sent. Josh reviews each one personally."); route(); }
+    else toast("We could not send that just now.");
+  }
+});
+
+
+/* ---------- join nudge for open visitors ---------- */
+let nudgeOff = false; try { nudgeOff = sessionStorage.getItem("smhub_nudge")==="off"; } catch(_){}
+function nudge(){
+  const n = $("#nudge"), [a] = parse();
+  const show = !nudgeOff && eff()==="none" && !["join","signin"].includes(a) && (a ? true : scrollY > innerHeight*.5);
+  n.classList.toggle("show", show);
+}
+addEventListener("scroll", nudge, {passive:true});
+document.addEventListener("click", e => { if (e.target.closest("[data-act='nudge-x']")){ nudgeOff = true; try{sessionStorage.setItem("smhub_nudge","off")}catch(_){} nudge(); } });
+
+/* ---------- motion helpers ---------- */
+let io;
+function observe(){
+  io && io.disconnect();
+  io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add("in"); e.target.querySelectorAll("[data-count]").forEach(countUp); if (e.target.dataset.count!=null) countUp(e.target); io.unobserve(e.target); } }), {threshold:.12, rootMargin:"0px 0px -5% 0px"});
+  document.querySelectorAll("[data-r]").forEach(el => io.observe(el));
+}
+function countUp(el){
+  if (el._c) return; el._c = 1;
+  const to = +el.dataset.count, t0 = performance.now(), dur = reduce ? 1 : 1500;
+  const step = t => { const k=Math.min(1,(t-t0)/dur); el.textContent = Math.round(to*(1-Math.pow(1-k,4))); if (k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function tileGlow(){ document.querySelectorAll(".tile").forEach(t => t.addEventListener("pointermove", e => { const r=t.getBoundingClientRect(); t.style.setProperty("--mx",(e.clientX-r.left)+"px"); t.style.setProperty("--my",(e.clientY-r.top)+"px"); })); }
+addEventListener("scroll", () => { const h=document.documentElement; $("#progress").style.width=(h.scrollTop/Math.max(1,h.scrollHeight-h.clientHeight)*100)+"%"; }, {passive:true});
+let netRAF;
+function net(){
+  const c = $("#net"); if (!c) return; cancelAnimationFrame(netRAF);
+  const x = c.getContext("2d"), dpr = Math.min(2, devicePixelRatio||1);
+  let W, H, pts = [], mx=.5, my=.5;
+  const size = () => { W=c.clientWidth; H=c.clientHeight; c.width=W*dpr; c.height=H*dpr; x.setTransform(dpr,0,0,dpr,0,0);
+    pts = Array.from({length:Math.round(Math.min(110,W*H/14000))},(_,i)=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,r:Math.random()*1.6+.8,s:i%17===0,p:Math.random()*6.28})); };
+  size(); onresize = size; onpointermove = e => { mx=e.clientX/innerWidth; my=e.clientY/innerHeight; };
+  const frame = t => {
+    if (!document.body.contains(c)) return;
+    x.clearRect(0,0,W,H); const ox=(mx-.5)*24, oy=(my-.5)*16;
+    for (const p of pts){ if(!reduce){p.x+=p.vx;p.y+=p.vy;} if(p.x<-20)p.x=W+20; if(p.x>W+20)p.x=-20; if(p.y<-20)p.y=H+20; if(p.y>H+20)p.y=-20; }
+    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++){ const a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;
+      if (d<15000){ const o=(1-d/15000)*(a.s||b.s?.5:.22); x.strokeStyle=a.s||b.s?`rgba(219,111,42,${o})`:`rgba(159,183,192,${o})`; x.lineWidth=.7; x.beginPath(); x.moveTo(a.x+ox,a.y+oy); x.lineTo(b.x+ox,b.y+oy); x.stroke(); } }
+    for (const p of pts){ if (p.s){ const k=(Math.sin(t/700+p.p)+1)/2; x.fillStyle=`rgba(219,111,42,${.12+k*.18})`; x.beginPath(); x.arc(p.x+ox,p.y+oy,p.r+6+k*8,0,7); x.fill(); x.fillStyle="#DB6F2A"; } else x.fillStyle="rgba(217,231,235,.55)"; x.beginPath(); x.arc(p.x+ox,p.y+oy,p.s?p.r+1.6:p.r,0,7); x.fill(); }
+    if (!reduce) netRAF = requestAnimationFrame(frame);
+  };
+  netRAF = requestAnimationFrame(frame);
+}
+
+/* ---------- boot ---------- */
+async function loadFeed(){
+  const {data, error} = await ST.sb.rpc("hub_feed", {p_hub:HUB});
+  if (error || !data){ ST.tier="none"; ST.feed=null; return; }
+  ST.tier = data.tier || "none"; ST.me = data.me || null; ST.feed = data.access ? data : null;
+}
+(async function boot(){
+  if (window.__HUB_PREVIEW__){ ST.preview = true; ST.tier = "admin"; ST.feed = window.__HUB_PREVIEW__; ST.viewAs = window.__HUB_VIEWAS__ || null; route(); return; }
+  if (typeof supabase === "undefined"){ app.innerHTML = `<section class="ph"><h1>Please refresh.</h1><p class="lead">The hub could not load.</p></section>`; return; }
+  ST.sb = supabase.createClient("https://hmjebqoeqffqljfyasys.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtamVicW9lcWZmcWxqZnlhc3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjc2MzEsImV4cCI6MjEwNzg0MzYzMX0.OZMx5dlkf4yp0akhU92t_K5BDN2N9hDhZeh-PzF7B2g");
+  const {data:{session}} = await ST.sb.auth.getSession();
+  if (/access_token|error_description/.test(location.hash)) history.replaceState(null, "", location.pathname + "#/");
+  ST.session = session;
+  if (session){
+    await loadFeed();
+    if (ST.tier==="none"){
+      let meta = session.user.user_metadata || {};
+      try { meta = Object.assign({}, meta, JSON.parse(localStorage.getItem("smhub_join")||"{}")); } catch(_){}
+      if (meta.join_hub===HUB){ await doJoin(meta); return; }
+    }
+  }
+  route();
+})();
+</script>
+</body>
+</html>
