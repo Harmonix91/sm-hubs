@@ -5,237 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>HR Hub | Sonder &amp; Metric</title>
-<meta name="description" content="Open market intelligence for HR leaders in infrastructure: open senior HR seats, HR moves and the stories changing the people agenda in the UK and Ireland.">
+<meta name="description" content="Open market intelligence for HR leaders in infrastructure: open senior HR seats, HR moves and market stories in the UK and Ireland, plus a small community of peers.">
 <meta name="theme-color" content="#0A1D26">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230F4A5E'/%3E%3Ctext x='32' y='46' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='42' font-weight='600' fill='%23FFFFFF' text-anchor='middle'%3E%26amp;%3C/text%3E%3C/svg%3E">
-<style>
-*,*::before,*::after{box-sizing:border-box}
-[hidden]{display:none!important}
-:root{
-  --ground:#0A1D26;--deep:#0C2F3C;--teal:#0F4A5E;--line:#2D5B6B;--mist:#9FB7C0;--ice:#D9E7EB;--paper:#F6F8F9;--ink:#12303E;--dim:#6F8C97;
-  --signal:#DB6F2A;--signal-2:#F29A5B;
-  --f:'Poppins',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-  --out:cubic-bezier(.16,1,.3,1);
-  --gut:clamp(16px,6vw,96px);
-  color-scheme:dark;
-}
-html{scroll-padding-top:84px;scroll-behavior:smooth}
-body{margin:0;background:var(--ground);color:var(--paper);font-family:var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:inherit}
-h1,h2,h3,h4{margin:0;font-weight:600;text-wrap:balance}
-p{margin:0}
-button{font:inherit}
-.sig{color:var(--signal)}
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
-
-/* nav */
-.nav{position:fixed;top:0;left:0;right:0;z-index:40;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--gut);background:rgba(10,29,38,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(45,91,107,.5)}
-.nav-l{display:flex;align-items:center;gap:22px;min-width:0}
-.wm{font-weight:600;font-size:18px;letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
-.wm b{color:var(--signal);font-weight:500}
-.tag{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper);display:flex;gap:10px;align-items:center;white-space:nowrap}
-.tag i{width:6px;height:6px;background:var(--signal);display:block}
-.links{display:flex;gap:26px;font-size:14px}
-.links a{text-decoration:none;color:var(--mist);transition:color .2s}
-.links a:hover,.links a.on{color:#fff}
-.nbtn{display:inline-block;text-decoration:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--signal);background:var(--signal);padding:9px 14px;color:var(--ground);font-weight:500;transition:background .25s;white-space:nowrap}
-.nbtn:hover{background:var(--signal-2)}
-@media(max-width:900px){.links{display:none}}
-@media(max-width:520px){.tag{display:none}}
-#progress{position:fixed;top:0;left:0;height:2px;background:var(--signal);width:0;z-index:41}
-
-/* motion */
-@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.hero [data-a]{animation:up .8s var(--out) both;animation-delay:calc(var(--d,0) * 1s)}
-[data-r]{opacity:0;transform:translateY(22px);transition:opacity .8s var(--out),transform .8s var(--out);transition-delay:calc(var(--d,0) * 1s)}
-[data-r].in{opacity:1;transform:none}
-
-/* hero */
-.hero{position:relative;min-height:86svh;display:flex;flex-direction:column;justify-content:center;padding:150px var(--gut) 90px;overflow:hidden;background:radial-gradient(1200px 800px at 80% 15%,rgba(15,74,94,.6),transparent 60%),var(--ground)}
-#net{position:absolute;inset:0;width:100%;height:100%}
-.hero-in{position:relative;z-index:2;max-width:1000px}
-.hero h1{font-size:clamp(38px,5.4vw,80px);line-height:1.08;letter-spacing:-.025em;margin-top:26px}
-.h1-sub{display:block;font-weight:300;color:var(--ice);font-size:.6em;letter-spacing:-.015em;margin-top:14px;line-height:1.2}
-.hero .lead{font-size:clamp(16px,1.3vw,19px);line-height:1.8;font-weight:300;color:var(--ice);max-width:640px;margin-top:30px}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:40px}
-.stats{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);margin-top:72px;max-width:1100px;border-top:1px solid var(--line)}
-.stat{padding:22px 22px 0 0;border-right:1px solid rgba(45,91,107,.5);margin-right:22px}
-.stat:last-child{border-right:none}
-.stat .v{font-size:clamp(30px,3.4vw,52px);font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
-.stat.hi .v{color:var(--signal)}
-.stat .l{font-size:13px;color:var(--mist);margin-top:10px;line-height:1.45}
-@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.stat{border-right:none;margin-right:0;padding-bottom:18px;border-bottom:1px solid rgba(45,91,107,.5)}}
-
-/* buttons */
-.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:14px 20px;border:1px solid var(--line);color:var(--ice);text-decoration:none;cursor:pointer;background:none;transition:all .3s}
-.btn:hover{border-color:var(--mist);color:#fff}
-.btn.o{background:var(--signal);border-color:var(--signal);color:var(--ground);font-weight:500}
-.btn.o:hover{background:var(--signal-2)}
-.btn[disabled]{opacity:.5;cursor:default}
-.btn:focus-visible,.nbtn:focus-visible,.tab:focus-visible,.chip:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
-
-/* pillars strip */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.pillar{background:var(--ground);padding:36px var(--gut) 36px 36px;text-decoration:none;display:flex;flex-direction:column;gap:10px;transition:background .3s}
-.pillar:first-child{padding-left:var(--gut)}
-.pillar:hover{background:rgba(15,74,94,.25)}
-.pillar .k{font-family:var(--mono);font-size:12px;color:var(--signal);display:flex;justify-content:space-between}
-.pillar h3{font-size:26px;letter-spacing:-.01em}
-.pillar p{font-size:14px;line-height:1.6;color:var(--mist);max-width:360px}
-.pillar .acc{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:auto;padding-top:10px}
-@media(max-width:900px){.pillars{grid-template-columns:1fr}.pillar,.pillar:first-child{padding:28px var(--gut)}}
-
-/* sections */
-.sec{position:relative;padding:120px var(--gut);border-top:1px solid rgba(45,91,107,.4)}
-.sec.deep{background:linear-gradient(180deg,var(--deep),var(--ground))}
-.sec.light{background:var(--paper);color:var(--ink);border-top:none}
-.sh{display:grid;grid-template-columns:120px 1fr;gap:24px;margin-bottom:56px}
-.sh .n{font-family:var(--mono);font-size:13px;color:var(--signal);padding-top:12px;letter-spacing:.08em}
-.sh h2{font-size:clamp(28px,3.6vw,50px);line-height:1.12;letter-spacing:-.025em}
-.sh p{font-size:17px;line-height:1.8;font-weight:300;color:var(--ice);max-width:680px;margin-top:16px}
-.light .sh p{color:#33505C}
-@media(max-width:760px){.sh{grid-template-columns:1fr;gap:6px}.sh .n{padding-top:0}.sec{padding:80px var(--gut)}}
-.empty{border:1px dashed var(--line);padding:28px;color:var(--mist);font-size:15px;line-height:1.6}
-.light .empty{border-color:#C9D7DD;color:#5C7682}
-.sub-h{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin:72px 0 22px;display:flex;gap:14px;align-items:center}
-.sub-h::after{content:"";flex:1;height:1px;background:var(--line)}
-
-/* tabs */
-.tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:34px;overflow-x:auto}
-.tab{all:unset;cursor:pointer;padding:16px 22px;font-size:15px;color:var(--mist);position:relative;white-space:nowrap;display:flex;gap:10px;align-items:center;transition:color .25s}
-.tab b{font-family:var(--mono);font-weight:400;font-size:11px;border:1px solid var(--line);padding:2px 7px;color:var(--mist)}
-.tab::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--signal);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--out)}
-.tab:hover,.tab.on{color:#fff}
-.tab.on::after{transform:none}
-.tab.on b{border-color:var(--signal);color:var(--signal-2)}
-.panel{animation:up .5s var(--out) both}
-.note{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--dim);margin-bottom:14px}
-
-/* seats */
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.chip{all:unset;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);padding:8px 13px;color:var(--mist);transition:all .25s}
-.chip:hover{color:#fff;border-color:var(--mist)}
-.chip.on{background:var(--signal);border-color:var(--signal);color:var(--ground)}
-.rows{border-top:1px solid var(--line)}
-.rowi{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 180px 28px;gap:22px;align-items:center;padding:20px 0;border-bottom:1px solid rgba(45,91,107,.6);text-decoration:none;position:relative;transition:padding .4s var(--out),background .3s}
-.rowi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--signal);transform:scaleY(0);transition:transform .35s var(--out)}
-.rowi:hover{padding-left:14px;background:rgba(15,74,94,.22)}
-.rowi:hover::before{transform:none}
-.rowi .t{font-size:18px;font-weight:600;line-height:1.3}
-.rowi .e{font-size:14px;color:var(--mist);margin-top:4px}
-.rowi .meta{font-size:13px;color:var(--ice);line-height:1.5}
-.rowi .meta small{display:block;color:var(--mist);font-size:12px}
-.age{font-family:var(--mono);font-size:11px;color:var(--mist);letter-spacing:.06em}
-.rowi .go{font-size:18px;color:var(--mist);transition:transform .3s var(--out),color .3s}
-.rowi:hover .go{transform:translate(4px,-4px);color:var(--signal)}
-@media(max-width:760px){.rowi{grid-template-columns:1fr 24px}.rowi .meta,.rowi .age{grid-column:1}.rowi .go{grid-row:1;grid-column:2}}
-
-/* moves */
-.mv-line{position:relative;padding-left:40px;border-left:1px solid var(--line);margin-left:8px;max-width:860px}
-.mv{position:relative;padding:0 0 34px}
-.mv::before{content:"";position:absolute;left:-46px;top:7px;width:11px;height:11px;border-radius:50%;background:var(--ground);border:1.5px solid var(--mist)}
-.mv:first-child::before{border-color:var(--signal);background:var(--signal)}
-.mv .d{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist)}
-.mv h3{font-size:20px;margin:8px 0 6px}
-.mv p{font-size:15px;color:var(--ice);line-height:1.6}
-
-/* news */
-.stories{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
-.story{background:var(--paper);color:var(--ink);padding:28px;display:flex;flex-direction:column;gap:12px;text-decoration:none;transition:transform .45s var(--out),box-shadow .45s}
-.story:hover{transform:translateY(-5px);box-shadow:0 30px 60px rgba(0,0,0,.35)}
-.story .k{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5C7682}
-.story h3{font-size:19px;line-height:1.3;color:var(--teal)}
-.story p{font-size:14px;line-height:1.65;color:#33505C}
-
-/* tools */
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-@media(max-width:1000px){.cards{grid-template-columns:1fr}}
-.card{border:1px solid var(--line);padding:28px;display:flex;flex-direction:column;gap:12px}
-.card .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between}
-.card h3{font-size:22px;line-height:1.2}
-.card p{font-size:14px;line-height:1.6;color:var(--mist)}
-.card .btn{margin-top:auto;align-self:flex-start;padding:11px 16px;font-size:11px}
-
-/* voices */
-.voices{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:64px;align-items:start}
-@media(max-width:1000px){.voices{grid-template-columns:1fr;gap:44px}}
-.post{border-top:1px solid var(--line);padding:30px 0}
-.post:last-child{border-bottom:1px solid var(--line)}
-.post .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal-2)}
-.post h3{font-size:clamp(22px,2.2vw,30px);line-height:1.2;letter-spacing:-.015em;margin:10px 0}
-.post .sf{font-size:16px;line-height:1.7;color:var(--ice);font-weight:300}
-.post .by{font-size:13px;color:var(--mist);margin-top:12px}
-.post details{margin-top:14px}
-.post summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);list-style:none}
-.post summary::-webkit-details-marker{display:none}
-.post summary::after{content:" +"}
-.post details[open] summary::after{content:" −"}
-.post .body{margin-top:16px;font-size:16px;line-height:1.8;color:var(--ice);font-weight:300;max-width:720px}
-.post .body p{margin-bottom:16px}
-.soon{border:1px dashed var(--line);padding:34px;display:grid;gap:14px}
-.soon h3{font-size:26px;line-height:1.25}
-.soon p{font-size:16px;line-height:1.7;color:var(--ice);font-weight:300}
-.founder{display:grid;grid-template-columns:120px 1fr;gap:22px;align-items:center;margin-bottom:24px}
-.founder img{width:120px;height:120px;object-fit:cover;display:block;border:1px solid var(--line)}
-.founder b{display:block;font-size:20px;font-weight:600}
-.founder span{display:block;font-size:14px;color:var(--mist);margin-top:4px}
-.aside blockquote{margin:0 0 22px;font-size:clamp(20px,2vw,28px);line-height:1.35;font-weight:600;letter-spacing:-.015em;position:relative;padding-top:36px}
-.aside blockquote::before{content:"\201C";position:absolute;left:-4px;top:-26px;font-size:100px;color:var(--signal);line-height:1}
-.aside p{font-size:15px;line-height:1.75;font-weight:300;color:var(--ice);margin-bottom:16px}
-
-/* community */
-.comm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start}
-@media(max-width:1000px){.comm{grid-template-columns:1fr;gap:48px}}
-.offer{display:grid;gap:0;border-top:1px solid #C9D7DD}
-.offer > div{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:22px 0;border-bottom:1px solid #C9D7DD}
-.offer .i{font-family:var(--mono);font-size:12px;color:var(--signal);padding-top:4px}
-.offer h3{font-size:19px;color:var(--teal);margin-bottom:6px}
-.offer p{font-size:15px;line-height:1.65;color:#33505C}
-.q{background:#fff;border-left:3px solid var(--signal);padding:22px 24px;margin-top:28px}
-.q small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#B4561B;margin-bottom:8px}
-.q h4{font-size:20px;color:var(--ink);line-height:1.35}
-.q p{font-size:14px;color:#33505C;margin-top:8px;line-height:1.6}
-.formbox{background:var(--ground);color:var(--paper);padding:36px 34px;position:relative;box-shadow:0 40px 100px rgba(10,29,38,.25)}
-.formbox::before{content:"";position:absolute;left:0;top:0;width:56px;height:3px;background:var(--signal)}
-.formbox h3{font-size:26px;margin:10px 0 8px}
-.formbox .sub{font-size:14px;color:var(--mist);line-height:1.6}
-.form{display:grid;gap:12px;margin-top:22px}
-.form label{display:grid;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist)}
-.form input[type=text],.form input[type=email]{font:inherit;font-size:16px;padding:14px 15px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;border-radius:0;outline:none;transition:border-color .2s;text-transform:none;letter-spacing:0}
-.form input:focus{border-color:var(--mist)}
-.form .consent{display:grid;grid-template-columns:20px 1fr;gap:12px;align-items:start;font-family:var(--f);font-size:13px;letter-spacing:0;text-transform:none;color:var(--mist);line-height:1.55;margin-top:6px}
-.form .consent input{width:18px;height:18px;accent-color:var(--signal);margin-top:2px}
-.form .consent a{color:var(--ice)}
-.form .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.form .btn{justify-content:center;margin-top:6px}
-.msg{margin-top:16px;border-left:3px solid var(--signal);padding-left:14px;font-size:15px;line-height:1.6}
-.msg.err{border-color:#E06A5A;color:#F3B3AA}
-
-/* dialog */
-dialog{border:1px solid var(--line);background:var(--ground);color:var(--paper);padding:34px;max-width:460px;width:calc(100% - 32px)}
-dialog::backdrop{background:rgba(5,14,19,.7);backdrop-filter:blur(4px)}
-dialog h3{font-size:22px;margin:8px 0}
-dialog .x{all:unset;cursor:pointer;position:absolute;right:16px;top:12px;color:var(--mist);font-size:22px;padding:4px 8px}
-
-footer{padding:44px var(--gut) 60px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid rgba(45,91,107,.5);font-size:13px;color:var(--dim)}
-footer .wm{font-size:18px;color:var(--paper)}
-footer p{max-width:560px;line-height:1.6}
-
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;transition-delay:0s!important}[data-r]{opacity:1;transform:none}html{scroll-behavior:auto}}
-</style>
+<link rel="stylesheet" href="./assets/hub.css">
 </head>
-<body>
+<body data-page="home" data-root="./">
 <div id="progress"></div>
 <header class="nav">
-  <div class="nav-l"><a class="wm" href="https://sonderandmetric.com">Sonder <b>&amp;</b> Metric</a><span class="tag"><i></i>HR Hub</span></div>
-  <nav class="links" aria-label="Sections"><a href="#resources">Resources</a><a href="#voices">Voices</a><a href="#community">Community</a></nav>
-  <a class="nbtn" href="#join">Join the community</a>
+  <div class="nav-l"><a class="wm" href="./">Sonder <b>&amp;</b> Metric</a><a class="tag" href="./" style="text-decoration:none"><i></i>HR Hub</a></div>
+  <nav class="links" aria-label="Sections"><a data-p="resources" href="./resources/">Resources</a><a data-p="voices" href="./voices/">Voices</a><a data-p="community" href="./community/">Community</a></nav>
+  <a class="nbtn" href="./community/#join">Join the community</a>
 </header>
-
 <main>
 <section class="hero">
   <canvas id="net" aria-hidden="true"></canvas>
@@ -243,7 +27,7 @@ footer p{max-width:560px;line-height:1.6}
     <div class="eyebrow" data-a style="--d:.05">Sonder &amp; Metric · HR Hub · UK &amp; Ireland</div>
     <h1 data-a style="--d:.15">Welcome to the <span class="sig">HR Hub</span>.<span class="h1-sub">For people leaders in infrastructure.</span></h1>
     <p class="lead" data-a style="--d:.3">For CHROs, People Directors and Heads of Talent at infrastructure platforms and the funds behind them. See which senior HR seats are open, who has moved, and what is changing in the market. Free and open to read, from the search firm that hires into the seat.</p>
-    <div class="cta" data-a style="--d:.42"><a class="btn o" href="#resources">See what's open now</a><a class="btn" href="#join">Join the community</a></div>
+    <div class="cta" data-a style="--d:.42"><a class="btn o" href="resources/">See what's open now</a><a class="btn" href="community/">Join the community</a></div>
   </div>
   <div class="stats" data-a style="--d:.55">
     <div class="stat hi"><div class="v" id="s-seats">–</div><div class="l">Senior HR seats open now</div></div>
@@ -253,249 +37,30 @@ footer p{max-width:560px;line-height:1.6}
   </div>
 </section>
 
-<div class="pillars">
-  <a class="pillar" href="#resources"><span class="k"><span>01</span><span>→</span></span><h3>Resources</h3><p>Open senior HR seats, HR moves and the month's stories. Plus the tools we use on our own searches.</p><span class="acc">Open to all</span></a>
-  <a class="pillar" href="#voices"><span class="k"><span>02</span><span>→</span></span><h3>Voices</h3><p>Where we stand on hiring for the people seat, and perspectives from HR leaders building infrastructure businesses.</p><span class="acc">Open to all</span></a>
-  <a class="pillar" href="#community"><span class="k"><span>03</span><span>→</span></span><h3>Community</h3><p>A small group of HR leaders: a quarterly question, a roundtable and pay benchmarking.</p><span class="acc">Request to join</span></a>
-</div>
-
-<section class="sec" id="resources">
-  <div class="sh"><div class="n" data-r>01 /</div><div><h2 data-r style="--d:.06">Resources.</h2><p data-r style="--d:.12">Every senior HR seat open in the UK and Ireland at the infrastructure employers we track, the HR moves we have confirmed, and the month's stories from the market HR leaders work in. Updated twice a week.</p></div></div>
-  <div class="tabs" role="tablist">
-    <button class="tab on" role="tab" data-tab="seats" aria-selected="true">Open seats <b id="t-seats">·</b></button>
-    <button class="tab" role="tab" data-tab="moves" aria-selected="false">Moves <b id="t-moves">·</b></button>
-    <button class="tab" role="tab" data-tab="news" aria-selected="false">News <b id="t-news">·</b></button>
-  </div>
-  <div id="panel" class="panel"><div class="empty">Loading the latest data…</div></div>
-
-  <div class="sub-h">Tools</div>
-  <div class="cards" id="tools"></div>
-</section>
-
-<section class="sec deep" id="voices">
-  <div class="sh"><div class="n" data-r>02 /</div><div><h2 data-r style="--d:.06">Voices.</h2><p data-r style="--d:.12">Short, plain views on hiring for the people seat in infrastructure, and conversations with the HR leaders who do the job.</p></div></div>
-  <div class="voices">
-    <div id="posts"></div>
-    <aside class="aside" data-r style="--d:.1">
-      <div class="founder"><img src="assets/josh.jpg" alt="Josh Foulkes" width="120" height="120" loading="lazy"><div><b>Josh Foulkes</b><span>Founder, Sonder &amp; Metric</span><span>Host of Solving Infrastructure</span></div></div>
-      <blockquote>The quality of the leadership team decides how much value an infrastructure asset creates. HR leaders build those teams.</blockquote>
-      <p>Sonder &amp; Metric is a specialist executive search firm for the energy, infrastructure and industrial ecosystem. We work with infrastructure investors, the platforms they own and the leadership teams that run them.</p>
-      <p>We built this hub for the HR leader who is often the one person in the room asking whether the team can deliver the plan.</p>
-      <a class="btn" href="https://sonderandmetric.com" target="_blank" rel="noopener">sonderandmetric.com ↗</a>
-    </aside>
+<section class="sec" id="inside">
+  <div class="sh"><div class="n" data-r>Inside /</div><div><h2 data-r style="--d:.06">Three parts to the hub.</h2><p data-r style="--d:.12">Resources and Voices are open to everyone. Community is a small group you can ask to join.</p></div></div>
+  <div class="pillar-cards">
+    <a class="pc" href="resources/" data-r><div class="top"><span>01</span><span class="acc">Open to all</span></div><h3>Resources</h3><p>Every senior HR seat open in the UK and Ireland, the HR moves we have confirmed, the month's market stories, and the tools we use on our own searches.</p><div class="stat-line"><span id="pc-res">Updated twice a week</span><span class="arrow">→</span></div></a>
+    <a class="pc" href="voices/" data-r style="--d:.08"><div class="top"><span>02</span><span class="acc">Open to all</span></div><h3>Voices</h3><p>Where we stand on hiring for the people seat, and perspectives from the HR leaders building infrastructure businesses.</p><div class="stat-line"><span id="pc-voi">Monthly</span><span class="arrow">→</span></div></a>
+    <a class="pc" href="community/" data-r style="--d:.16"><div class="top"><span>03</span><span class="acc">Request to join</span></div><h3>Community</h3><p>A small group of HR leaders: a quarterly question, a roundtable and pay benchmarking.</p><div class="stat-line"><span id="pc-com">Free · request to join</span><span class="arrow">→</span></div></a>
   </div>
 </section>
 
-<section class="sec light" id="community">
-  <div class="sh"><div class="n" data-r>03 /</div><div><h2 data-r style="--d:.06">Community.</h2><p data-r style="--d:.12">A small group of HR and people leaders at infrastructure platforms and funds. It is free. Josh reads every request and keeps the group to people doing the job.</p></div></div>
-  <div class="comm">
-    <div data-r>
-      <div class="offer">
-        <div><span class="i">01</span><div><h3>A quarterly question</h3><p>One question each quarter on a live people issue. Answers stay anonymous, and the results are shared openly on this page.</p></div></div>
-        <div><span class="i">02</span><div><h3>A roundtable</h3><p>A small, off-the-record conversation for people leaders, hosted by Josh. The first one runs once the group is big enough to make it worth your evening.</p></div></div>
-        <div><span class="i">03</span><div><h3>Pay benchmarking</h3><p>Share your data anonymously and see how senior HR pay compares across infrastructure platforms and funds.</p></div></div>
-      </div>
-      <div id="question"></div>
-    </div>
-    <div class="formbox" id="join" data-r style="--d:.1">
-      <span class="eyebrow">Free · by request</span>
-      <h3>Request to join</h3>
-      <p class="sub">For HR and people leaders at infrastructure platforms and funds. Please use your work email.</p>
-      <form class="form" id="joinf" novalidate>
-        <label>Full name<input type="text" name="name" required maxlength="120" autocomplete="name"></label>
-        <label>Job title<input type="text" name="title" required maxlength="160" autocomplete="organization-title"></label>
-        <label>Company<input type="text" name="company" required maxlength="160" autocomplete="organization"></label>
-        <label>Work email<input type="email" name="email" required maxlength="200" autocomplete="email"></label>
-        <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-        <label class="consent"><input type="checkbox" name="consent" required><span>I'm happy for Sonder &amp; Metric to contact me about the HR Hub. See our <a href="https://sonderandmetric.com/privacy-policy/" target="_blank" rel="noopener">privacy policy</a>.</span></label>
-        <button class="btn o" type="submit">Request to join</button>
-      </form>
-      <div id="jmsg"></div>
+<section class="sec light">
+  <div class="sh"><div class="n" data-r>About /</div><div><h2 data-r style="--d:.06">Who's behind it.</h2></div></div>
+  <div class="voices" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+    <div data-r><div class="aside"><blockquote style="color:var(--teal)">The quality of the leadership team decides how much value an infrastructure asset creates. HR leaders build those teams.</blockquote></div></div>
+    <div data-r style="--d:.1">
+      <div class="founder"><img src="assets/josh.jpg" alt="Josh Foulkes" width="120" height="120" loading="lazy" style="border-color:#C9D7DD"><div><b style="color:var(--ink)">Josh Foulkes</b><span style="color:#5C7682">Founder, Sonder &amp; Metric</span><span style="color:#5C7682">Host of Solving Infrastructure</span></div></div>
+      <p style="font-size:16px;line-height:1.8;font-weight:300;color:#33505C">Sonder &amp; Metric is a specialist executive search firm for the energy, infrastructure and industrial ecosystem. We work with infrastructure investors, the platforms they own and the leadership teams that run them. We built this hub for the HR leader who is often the one person in the room asking whether the team can deliver the plan.</p>
     </div>
   </div>
 </section>
 </main>
-
 <footer>
-  <div><div class="wm">Sonder <b class="sig">&amp;</b> Metric</div><p style="margin-top:10px">Executive search for the energy, infrastructure and industrial ecosystem.</p></div>
+  <div><div class="wm">Sonder <b class="sig">&amp;</b> Metric</div><p style="margin-top:10px">Executive search for the energy, infrastructure and industrial ecosystem. <a href="https://sonderandmetric.com" target="_blank" rel="noopener">sonderandmetric.com</a></p></div>
   <p>Role and appointment data from the Sonder &amp; Metric Leadership Signals Index and Movers tracker. Links go to the original job adverts and sources. <a href="https://sonderandmetric.com/privacy-policy/">Privacy policy</a></p>
 </footer>
-
-<dialog id="tooldlg">
-  <button class="x" aria-label="Close" data-close>×</button>
-  <span class="eyebrow" id="tool-k">Tool</span>
-  <h3 id="tool-t">Get it when it's ready</h3>
-  <p class="sub" style="font-size:14px;color:var(--mist);line-height:1.6">We'll email it to you once it's ready. Work email, please.</p>
-  <form class="form" id="toolf" novalidate>
-    <label>Work email<input type="email" name="email" required maxlength="200" autocomplete="email"></label>
-    <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-    <label class="consent"><input type="checkbox" name="consent" required><span>I'm happy for Sonder &amp; Metric to email me about the HR Hub. See our <a href="https://sonderandmetric.com/privacy-policy/" target="_blank" rel="noopener">privacy policy</a>.</span></label>
-    <button class="btn o" type="submit">Email it to me</button>
-  </form>
-  <div id="tmsg"></div>
-</dialog>
-
-<script>
-const API = "https://hmjebqoeqffqljfyasys.supabase.co/rest/v1/rpc/";
-const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtamVicW9lcWZmcWxqZnlhc3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjc2MzEsImV4cCI6MjEwNzg0MzYzMX0.OZMx5dlkf4yp0akhU92t_K5BDN2N9hDhZeh-PzF7B2g"; // public key; data protected by row-level security
-const HUB = "hr";
-const LEVEL = {c_suite:"C-suite", director:"Director", head_of:"Head of"};
-const MOVE = {external_hire:"Appointment", internal_promotion:"Promotion", departure:"Departure", board:"Board", interim:"Interim"};
-const TOOLS = [
-  {id:"scorecard", t:"Senior hiring scorecard", d:"The scorecard we use on CHRO, People Director and Head of Talent searches, with weightings by business stage."},
-  {id:"interview-bank", t:"Interview bank", d:"Questions for each capability on the scorecard, and what strong and weak answers sound like."},
-  {id:"first-90", t:"First 90 days guide", d:"What a new HR leader should agree with the CEO and the fund before day one, and the first 90 days after it."}
-];
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const safe = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : null; } catch { return null; } };
-const fmtD = (d, o={day:"numeric",month:"short"}) => d ? new Date(String(d).length===10 ? d+"T12:00:00" : d).toLocaleDateString("en-GB", o) : "";
-const para = s => esc(s).split(/\n{2,}/).map(p => "<p>" + p.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>") + "</p>").join("");
-const $ = s => document.querySelector(s);
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const rpc = (fn, body) => fetch(API + fn, {method:"POST", headers:{"apikey":KEY, "Authorization":"Bearer "+KEY, "Content-Type":"application/json"}, body:JSON.stringify(body)}).then(r => r.ok ? r.json() : Promise.reject(r.status));
-
-let D = null, tab = "seats";
-
-/* ---------- resources ---------- */
-function setCounts(){
-  const s = D.stats || {};
-  let mv = s.moves||0;
-  if (!mv){ mv = new Set((D.seats||[]).map(r => r.employer)).size; $("#s-moves-l").textContent = "Employers hiring senior HR"; }
-  [["s-seats",s.open_seats],["s-moves",mv],["s-stories",s.stories],["s-emp",s.employers_tracked]].forEach(([id,v]) => countUp($("#"+id), v||0));
-  $("#t-seats").textContent = (D.seats||[]).length; $("#t-moves").textContent = (D.movers||[]).length; $("#t-news").textContent = (D.news||[]).length;
-}
-function seatsHTML(list){
-  return list.map(r => { const u = safe(r.url); return `<a class="rowi" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}>
-    <div><div class="t">${esc(r.role_title)}</div><div class="e">${esc(r.employer)}</div></div>
-    <div class="meta">${esc(r.sector||"")}<small>${esc(r.location||"")}</small></div>
-    <div class="age">${esc(LEVEL[r.level]||"")}${r.first_seen?` · seen ${esc(fmtD(r.first_seen))}`:""}</div>
-    <div class="go" aria-hidden="true">${u?"↗":""}</div></a>`; }).join("");
-}
-function renderPanel(){
-  const p = $("#panel");
-  document.querySelectorAll(".tab").forEach(b => { const on = b.dataset.tab===tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
-  if (!D){ p.innerHTML = `<div class="empty">The latest data could not load just now. Please refresh in a minute.</div>`; return; }
-  p.classList.remove("panel"); void p.offsetWidth; p.classList.add("panel");
-  if (tab==="seats"){
-    const seats = D.seats||[];
-    if (!seats.length){ p.innerHTML = `<div class="empty">No senior HR seats open at the employers we track this week. We read every employer on Tuesdays and Fridays.</div>`; return; }
-    const lv = ["c_suite","director","head_of"].filter(l => seats.some(r => r.level===l));
-    p.innerHTML = `<p class="note">Head of, Director and C-suite HR roles in the UK and Ireland. Each links to the original advert.</p>
-      <div class="chips"><button class="chip on" data-f="all">All · ${seats.length}</button>${lv.map(l=>`<button class="chip" data-f="${l}">${LEVEL[l]}</button>`).join("")}</div>
-      <div class="rows" id="rows">${seatsHTML(seats)}</div>`;
-    p.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-      p.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x===b));
-      const f = b.dataset.f; $("#rows").innerHTML = seatsHTML(seats.filter(r => f==="all" || r.level===f));
-    });
-    return;
-  }
-  if (tab==="moves"){
-    const mv = D.movers||[];
-    if (!mv.length){ p.innerHTML = `<div class="empty">HR moves appear here once we have confirmed them. The tracker reads trade press and the newsrooms of the employers we follow every weekday.</div>`; return; }
-    p.innerHTML = `<div class="mv-line">${mv.map(a => { const u = safe(a.source_url); return `<div class="mv">
-      <div class="d">${esc(fmtD(a.announced_date,{day:"numeric",month:"short",year:"numeric"}))}${MOVE[a.move_type]?" · "+MOVE[a.move_type]:""}</div>
-      <h3>${esc(a.person_name)} → ${esc(a.role_title)}, ${esc(a.to_company)}</h3>
-      ${a.from_company?`<p>Previously ${esc(a.from_role?a.from_role+", ":"")}${esc(a.from_company)}.</p>`:""}
-      ${u?`<p style="margin-top:6px;font-size:13px"><a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--mist)">${esc(a.source_name||"Source")} ↗</a></p>`:""}</div>`; }).join("")}</div>`;
-    return;
-  }
-  const n = D.news||[];
-  if (!n.length){ p.innerHTML = `<div class="empty">No stories for the HR agenda in the past month yet.</div>`; return; }
-  p.innerHTML = `<div class="stories">${n.map(s => { const u = safe(s.url); return `<a class="story" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}>
-    <div class="k"><span>${esc(s.source||"")}</span><span>${esc(fmtD(s.published_date))}</span></div><h3>${esc(s.headline)}</h3>${s.summary?`<p>${esc(s.summary)}</p>`:""}</a>`; }).join("")}</div>`;
-}
-document.querySelectorAll(".tab").forEach(b => b.onclick = () => { tab = b.dataset.tab; renderPanel(); });
-
-$("#tools").innerHTML = TOOLS.map(t => `<div class="card" data-r><span class="k"><span>Tool</span><span>In production</span></span><h3>${esc(t.t)}</h3><p>${esc(t.d)}</p><button class="btn" data-tool="${t.id}">Email it to me when ready</button></div>`).join("");
-
-/* ---------- voices ---------- */
-function renderVoices(){
-  const v = (D && D.voices) || [];
-  $("#posts").innerHTML = v.length ? v.map(p => { const u = safe(p.link_url); return `<article class="post" data-r>
-      <div class="k">${p.kind==="guest"?"Guest voice":"Where we stand"} · ${esc(fmtD(p.published_at,{day:"numeric",month:"long",year:"numeric"}))}</div>
-      <h3>${esc(p.title)}</h3>${p.standfirst?`<p class="sf">${esc(p.standfirst)}</p>`:""}
-      <p class="by">${esc(p.author_name||"Josh Foulkes")}${p.author_role?", "+esc(p.author_role):""}</p>
-      ${p.body?`<details><summary>Read the piece</summary><div class="body">${para(p.body)}</div></details>`:""}
-      ${u?`<p style="margin-top:12px"><a class="btn" style="padding:10px 14px;font-size:11px" href="${esc(u)}" target="_blank" rel="noopener">Listen or read more ↗</a></p>`:""}</article>`; }).join("")
-    : `<div class="soon" data-r><span class="eyebrow">Coming in November</span><h3>The first pieces are being written.</h3><p>A short view each month on hiring for the people seat in infrastructure, and conversations with HR leaders from the Solving Infrastructure podcast.</p><p><a class="btn" href="#join">Join the community to hear first</a></p></div>`;
-  observe();
-}
-
-/* ---------- community ---------- */
-function renderQuestion(){
-  const q = D && D.question;
-  $("#question").innerHTML = q ? `<div class="q"><small>This quarter's question</small><h4>${esc(q.title)}</h4>${q.standfirst?`<p>${esc(q.standfirst)}</p>`:""}${q.body?`<div style="margin-top:10px;font-size:14px;color:#33505C;line-height:1.65">${para(q.body)}</div>`:""}</div>` : "";
-}
-function reason(r){
-  return {work_email_required:"Please use your work email.", bad_email:"Please check your email address.", consent_required:"Please tick the box so we can contact you.", busy:"We're getting a lot of requests. Please try again in a few minutes.", too_long:"One of the fields is too long."}[r] || "That didn't work. Please try again, or email info@sonderandmetric.com.";
-}
-async function submit(form, interest, msgEl){
-  const fd = new FormData(form), b = form.querySelector("button[type=submit]");
-  if (fd.get("website")) { form.hidden = true; msgEl.innerHTML = `<div class="msg">Thank you.</div>`; return; }
-  const em = String(fd.get("email")||"").trim();
-  if (interest==="community" && ["name","title","company"].some(k => !String(fd.get(k)||"").trim())){ msgEl.innerHTML = `<div class="msg err">Please fill in every field.</div>`; return; }
-  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)){ msgEl.innerHTML = `<div class="msg err">${reason("bad_email")}</div>`; return; }
-  if (!fd.get("consent")){ msgEl.innerHTML = `<div class="msg err">${reason("consent_required")}</div>`; return; }
-  b.disabled = true; msgEl.innerHTML = "";
-  try {
-    const r = await rpc("hub_signup", {p_hub:HUB, p_email:em, p_name:fd.get("name")||null, p_title:fd.get("title")||null, p_company:fd.get("company")||null, p_interest:interest, p_consent:true});
-    if (!r || !r.ok){ b.disabled = false; msgEl.innerHTML = `<div class="msg err">${reason(r && r.reason)}</div>`; return; }
-    form.hidden = true;
-    const first = String(fd.get("name")||"").trim().split(/\s+/)[0];
-    msgEl.innerHTML = interest==="community"
-      ? `<div class="msg">Thanks${first?", "+esc(first):""}. Josh reads every request personally and will be in touch.</div>`
-      : `<div class="msg">Thanks. We'll email it to <b>${esc(em)}</b> as soon as it's ready.</div>`;
-  } catch(_) { b.disabled = false; msgEl.innerHTML = `<div class="msg err">${reason()}</div>`; }
-}
-$("#joinf").addEventListener("submit", e => { e.preventDefault(); submit(e.target, "community", $("#jmsg")); });
-const dlg = $("#tooldlg"); let toolId = null;
-document.addEventListener("click", e => {
-  const t = e.target.closest("[data-tool]");
-  if (t){ toolId = t.dataset.tool; const tool = TOOLS.find(x => x.id===toolId); $("#tool-k").textContent = "In production"; $("#tool-t").textContent = tool.t; $("#tmsg").innerHTML = "";
-    const tf = $("#toolf"); tf.hidden = false; tf.reset(); tf.querySelector("button[type=submit]").disabled = false; dlg.showModal ? dlg.showModal() : dlg.setAttribute("open",""); }
-  if (e.target.closest("[data-close]")) dlg.close();
-});
-$("#toolf").addEventListener("submit", e => { e.preventDefault(); submit(e.target, "tool:"+toolId, $("#tmsg")); });
-
-/* ---------- motion ---------- */
-let io;
-function observe(){
-  if (!("IntersectionObserver" in window) || reduce){ document.querySelectorAll("[data-r]").forEach(el => el.classList.add("in")); return; }
-  io = io || new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold:.1, rootMargin:"0px 0px -5% 0px"});
-  document.querySelectorAll("[data-r]:not(.in)").forEach(el => io.observe(el));
-}
-function countUp(el, to){
-  if (reduce){ el.textContent = to; return; }
-  const t0 = performance.now(), dur = 1200;
-  const step = t => { const k = Math.min(1,(t-t0)/dur); el.textContent = Math.round(to*(1-Math.pow(1-k,4))); if (k<1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
-}
-addEventListener("scroll", () => { const h = document.documentElement; $("#progress").style.width = (h.scrollTop/Math.max(1,h.scrollHeight-h.clientHeight)*100)+"%"; }, {passive:true});
-(function net(){
-  const c = $("#net"); if (!c || !c.getContext) return;
-  const x = c.getContext("2d"), dpr = Math.min(2, devicePixelRatio||1);
-  let W, H, pts = [], mx = .5, my = .5;
-  const size = () => { W = c.clientWidth; H = c.clientHeight; c.width = W*dpr; c.height = H*dpr; x.setTransform(dpr,0,0,dpr,0,0);
-    pts = Array.from({length:Math.round(Math.min(100, W*H/15000))}, (_,i) => ({x:Math.random()*W, y:Math.random()*H, vx:(Math.random()-.5)*.18, vy:(Math.random()-.5)*.18, r:Math.random()*1.6+.8, s:i%17===0, p:Math.random()*6.28})); };
-  size(); addEventListener("resize", size); addEventListener("pointermove", e => { mx = e.clientX/innerWidth; my = e.clientY/innerHeight; });
-  const frame = t => {
-    x.clearRect(0,0,W,H); const ox = (mx-.5)*24, oy = (my-.5)*16;
-    for (const p of pts){ if (!reduce){ p.x += p.vx; p.y += p.vy; } if (p.x<-20) p.x = W+20; if (p.x>W+20) p.x = -20; if (p.y<-20) p.y = H+20; if (p.y>H+20) p.y = -20; }
-    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++){ const a = pts[i], b = pts[j], dx = a.x-b.x, dy = a.y-b.y, d = dx*dx+dy*dy;
-      if (d<15000){ const o = (1-d/15000)*(a.s||b.s?.5:.22); x.strokeStyle = a.s||b.s ? `rgba(219,111,42,${o})` : `rgba(159,183,192,${o})`; x.lineWidth = .7; x.beginPath(); x.moveTo(a.x+ox,a.y+oy); x.lineTo(b.x+ox,b.y+oy); x.stroke(); } }
-    for (const p of pts){ if (p.s){ const k = (Math.sin(t/700+p.p)+1)/2; x.fillStyle = `rgba(219,111,42,${.12+k*.18})`; x.beginPath(); x.arc(p.x+ox,p.y+oy,p.r+6+k*8,0,7); x.fill(); x.fillStyle = "#DB6F2A"; } else x.fillStyle = "rgba(217,231,235,.55)"; x.beginPath(); x.arc(p.x+ox,p.y+oy,p.s?p.r+1.6:p.r,0,7); x.fill(); }
-    if (!reduce && !document.hidden) requestAnimationFrame(frame); else if (!reduce) setTimeout(() => requestAnimationFrame(frame), 500);
-  };
-  requestAnimationFrame(frame);
-})();
-
-/* ---------- boot: page is already on screen; data fills in ---------- */
-observe();
-renderVoices();
-rpc("hub_public", {p_hub:HUB}).then(d => { D = d && d.ok ? d : null; }).catch(() => { D = null; }).finally(() => {
-  if (D){ setCounts(); renderVoices(); renderQuestion(); }
-  renderPanel(); observe();
-});
-</script>
+<script src="./assets/hub.js"></script>
 </body>
 </html>
