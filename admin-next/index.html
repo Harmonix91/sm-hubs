@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0F4A5E">
+<title>Control Room | Sonder &amp; Metric</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230F4A5E'/%3E%3Ctext x='32' y='46' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='42' font-weight='600' fill='%23FFFFFF' text-anchor='middle'%3E%26amp;%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="cr.css?v=1">
+</head>
+<body class="gate">
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="brand"><span class="mark">&amp;</span><span>Sonder &amp; Metric<small>Control room</small></span></div>
+    <nav class="sidenav" id="nav" hidden></nav>
+    <div class="sidefoot"><span id="who"></span><button id="signout" hidden>Sign out</button></div>
+  </aside>
+  <div class="main">
+    <div class="topbar"><button class="menu" id="menu" aria-label="Open menu"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><span class="tb-brand">Control room</span></div>
+    <header class="head">
+      <div><div class="eyebrow" id="eyebrow">Sonder &amp; Metric</div><h1 id="pagetitle">Control room</h1></div>
+      <div class="head-actions" id="headactions"></div>
+    </header>
+    <div id="msg" role="status" aria-live="polite"></div>
+    <main id="app"></main>
+  </div>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden aria-modal="true" role="dialog"><div class="panel-head"><div id="paneltitle"></div><button class="icon" id="panelclose" aria-label="Close">✕</button></div><div class="panel-body" id="panelbody"></div></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="core.js?v=1"></script>
+<script src="today.js?v=1"></script>
+<script src="marketing.js?v=1"></script>
+<script src="intel.js?v=1"></script>
+<script src="system.js?v=1"></script>
+<script>CR.start();</script>
+</body>
+</html>
